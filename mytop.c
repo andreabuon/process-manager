@@ -8,9 +8,9 @@ void getCPUinfo() {
 	FILE *file = fopen("/proc/cpuinfo", "r");
 	assert(file && "Errore apertura file");
 
-	char c;
-	while (fread(&c, sizeof(char), 1, file)){
-		printf("%c", c);
+	char c[1024];
+	while (fgets(c, 1024, file)){
+		printf("%s", c);
 	}
 
 	fclose(file);
@@ -23,6 +23,7 @@ void getProcessesList(){
 	struct dirent *entry;
 	entry = readdir(dir);
 	assert(entry && "Errore lettura directory");
+
 	while(entry){
 		switch (entry->d_type){
 			case DT_DIR:
@@ -39,5 +40,5 @@ void getProcessesList(){
 
 int main(int argc, char *argv[]) {
 	//getCPUinfo();
-	getProcessesList();
+	//getProcessesList();
 }
