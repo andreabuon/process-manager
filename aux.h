@@ -1,14 +1,14 @@
 //Struttura dati che contiene le informazioni che ci interessano sul processo
 typedef struct info{
 	int pid;
-	char comm[18]; //sistemare, dovrebbe essere 16
+	char comm[17]; //sistemare, dovrebbe essere 16+1
 	char state;
 } info;
 //Alloca una nuova struttura info
 info* info_new();
-//Stampa su console l'info in input
+//Stampa su console i dati del processo salvati nella struttura info in input
 void info_print(info* info);
-//Dealloca l'info in input
+//Dealloca struttura info in input
 void info_free(info* info);
 
 //Stampa su console le informazioni relative al processore
@@ -19,7 +19,7 @@ void getCPUinfo();
 void getProcessesList();
 
 //Crea una nuova struttura info con le informazioni relative al processo il cui pid è passato in input
-info* getProcessData(char* pid);
+info* getProcessInfo(char* pid);
 
 //Controlla se la stringa passata come argomento contiene solo numeri
 int isNumber(char* string);

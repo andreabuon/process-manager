@@ -11,7 +11,6 @@
 #include <string.h>
 
 #define CHUNK 1024 //numero di byte letti per volta
-#define MAX_PID_CHARS 7 //7 perchè il pid massimo sul mio pc è 4194304 che ha 7 caratteri 		/proc/sys/kernel/max
 
 void getCPUinfo() {
 	FILE *file = fopen("/proc/cpuinfo", "r");
@@ -33,10 +32,10 @@ void getProcessesList(){
 	assert(entry && "Errore lettura directory");
 
 	while(entry){
-		//stampa solo le entry delle directory che corrispondono ai processi (ovvero che come nome hanno un numero - il pid)
+		//stampa solo le entry di directory che corrispondono a processi (ovvero che hanno come nome un numero [il pid])
 		if(entry->d_type == DT_DIR && isNumber(entry->d_name)){
-			printf(" ");
-			info* info = getProcessData(entry->d_name); //sbagliato sistemare
+			printf(" "); //commentando crasha il programma?!?
+			info* info = getProcessInfo(entry->d_name);
 			info_print(info);
 			info_free(info);
 		}
@@ -45,13 +44,15 @@ void getProcessesList(){
 	closedir(dir);
 }
 
-info* getProcessData(char *pid){
-	//Le informazioni sul processo sono salvate nel seguente file: "/proc/[pid]/stat"
-	char path[25] = "/proc/"; 
-	//19 = strlen("/proc/") + MAX_PID_CHARS + strlen("/stat") + NULL termination; // sistemare
-	strncat(path, pid, MAX_PID_CHARS);  //sistemare!!!! forse non c'è il null byte finale in pid
-	char stat_file[] = "/stat";
-	strncat(path, stat_file, 5);
+info* getProcessInfo(char *pid){
+	//Le informazioni sul processo vengono estratte dal file: "/proc/[pid]/stat"
+	char path[50]; //50 numero a caso, dovrebbe bastare; sistemare
+	char dir[] = "/proc/"; 
+	char filename[] = "/stat";
+	memset(path, 0, 50);
+	strcat(path, dir); //sistemare n
+	strcat(path, pid);
+	strcat(path, filename);
 
 	FILE *file = fopen(path, "r");
 	assert(file && "Errore apertura file");
@@ -75,7 +76,7 @@ int sendSignal(int signal){
 }
 
 int isNumber(char* string){
-	while(*string != '\0'){
+	while(*string){
 		if(!isdigit(*string))
 			return 0;
 		string++;
