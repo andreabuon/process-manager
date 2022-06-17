@@ -6,6 +6,7 @@
 #include <ctype.h>
 
 #include <signal.h>
+#include <stdlib.h>
 
 #define CHUNK 1024 //numero di byte letti per volta
 
@@ -59,17 +60,23 @@ void getProcessesList(){
 	closedir(dir);
 }
 
-//Stampa su stdout le informazioni relativa al processo con pid 1 (nel mio caso systemd)
+//Stampa su stdout le informazioni relativa al processo con pid 1
 void getProcessData(){
-	char path[] = "/proc/1/status";
+	char path[] = "/proc/1/stat";
 	FILE *file = fopen(path, "r");
 	assert(file && "Errore apertura file");
 
-	char c[CHUNK];
-	while (fgets(c, CHUNK, file)){
-		printf("%s", c);
-	}
+	char* line = NULL;
+	size_t n;
+	getline(&line, &n, file);
+	//printf("%s", line);
 
+	int pid;
+	char comm[18], state; //sistemare, comm è 16 caratteri + 2 parentesi da togliere
+	sscanf(line, "%d %s %c", &pid, &comm, &state);
+	printf("Pid: %d - Nome: %s - Stato: %c\n", pid, comm, state);
+
+	free(line);
 	fclose(file);
 }
 
@@ -84,6 +91,6 @@ int sendSignal(int signal){
 int main(int argc, char *argv[]) {
 	//getCPUinfo();
 	//getProcessesList();
-	//getProcessData();
+	getProcessData();
 }
 
