@@ -1,8 +1,9 @@
-mytop: mytop.c
-	gcc -o mytop -g mytop.c `pkg-config --cflags --libs gtk4` 
+mytop: mytop.c aux.c
+	gcc -o mytop mytop.c -g
 
 all: mytop
 
-.PHONY: clean
 clean:
 	rm mytop
+
+.phony: clean
