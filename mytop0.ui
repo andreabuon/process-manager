@@ -2,21 +2,85 @@
 <interface>
   <requires lib="gtk" version="4.6"/>
   <object class="GtkWindow" id="window">
+    <property name="title">Andrea's Top</property>
     <property name="default-height">600</property>
     <property name="default-width">600</property>
-    <property name="title">Andrea's Top</property>
     
     <child>
       <object class="GtkBox">
-        <property name="halign">baseline</property>
         <property name="orientation">vertical</property>
-        <property name="spacing">2</property>
-    
         <child>
           <object class="GtkTreeView" id="treeview">
-            <property name="enable-grid-lines">both</property>
             <property name="hexpand">True</property>            
             <property name="vexpand">True</property>
+            <property name="enable-grid-lines">both</property>
+
+            <child>
+              <object class="GtkTreeViewColumn">
+                <property name="title">Processo</property>
+                <property name="resizable">True</property>
+                <property name="expand">True</property>
+
+                <child>
+                  <object class="GtkCellRendererText"/>
+                  <attributes>
+                    <attribute name="text">0</attribute>
+                  </attributes>
+                </child>
+              </object>
+            </child>
+
+            <child>
+              <object class="GtkTreeViewColumn">
+                <property name="title">PID</property>
+                <property name="resizable">True</property>
+                <property name="expand">True</property>
+
+                <child>
+                  <object class="GtkCellRendererText"/>
+                  <attributes>
+                    <attribute name="text">1</attribute>
+                  </attributes>
+                </child>
+              </object>
+            </child>
+
+            <child>
+              <object class="GtkTreeViewColumn">
+                <property name="title">Stato</property>
+                <property name="resizable">True</property>
+                <property name="expand">True</property>
+
+                <child>
+                  <object class="GtkCellRendererText"/>
+                  <attributes>
+                    <attribute name="text">2</attribute>
+                  </attributes>
+                </child>
+
+              </object>
+            </child>
+
+            <child>
+              <object class="GtkTreeViewColumn">
+                <property name="title">Memoria Utilizzata</property>
+                <property name="resizable">True</property>
+                <property name="expand">True</property>
+
+                <child>
+                  <object class="GtkCellRendererText"/>
+                  <attributes>
+                    <attribute name="text">3</attribute>
+                  </attributes>
+                </child>
+
+              </object>
+            </child>
+
+          <child internal-child="selection">
+            <object class="GtkTreeSelection" id="selection">
+            </object>
+          </child>
           </object>
         </child>
 
@@ -51,9 +115,36 @@
                 <property name="label">Resume</property>
               </object>
             </child>
+
           </object>
         </child>
+
       </object>
     </child>
   </object>
 </interface>
+
+
+<!-- 
+  <child>
+            <object class="GtkListStore" id="liststore">
+              <columns>
+                <column type="gchararray"/>
+                <column type="gint"/>
+                <column type="gchararray"/>
+              </columns>
+            <data>
+              <row>
+                  <col id="0">Processo0</col>
+                  <col id="1">0</col>
+                  <col id="2">R</col>
+                </row>
+                <row>
+                  <col id="0">Processo1</col>
+                  <col id="1">1</col>
+                  <col id="2">S</col>
+                </row>
+              </data>
+            </object>
+          </child>
+-->

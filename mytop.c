@@ -13,25 +13,15 @@ static void activate(GtkApplication *app, gpointer user_data)
 	gtk_window_set_application(GTK_WINDOW(window), app);
 	
 	//GObject *btn_kill = gtk_builder_get_object(builder, "btn_kill");
-	//g_signal_connect(btn_kill, "clicked", G_CALLBACK(getCPUinfo), NULL);
+	//g_signal_connect(btn_kill, "clicked", G_CALLBACK(getCPUinfo), NULL); //sistemare
 
 	GObject *treeview = gtk_builder_get_object(builder, "treeview");
-
-	GtkCellRenderer *renderer = gtk_cell_renderer_text_new();
-	gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(treeview), 0, "Processo", renderer, "text", 0, NULL);
-
-	//GtkCellRenderer *renderer1 = gtk_cell_renderer_text_new();
-	gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(treeview), 1, "PID", renderer, "text", 1, NULL);
-
-	//GtkCellRenderer *renderer2 = gtk_cell_renderer_text_new ();
-	gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(treeview), 2, "Stato", renderer, "text", 2, NULL);
-
-	GtkListStore *liststore = gtk_list_store_new(3, G_TYPE_STRING, G_TYPE_INT, G_TYPE_CHAR);
+	GtkListStore *liststore = gtk_list_store_new(4, G_TYPE_STRING, G_TYPE_INT, G_TYPE_CHAR, G_TYPE_STRING); //sistemare, non visualizza il carattere ma int corrispondente
 	GtkTreeIter iter;
-	gtk_list_store_append(liststore, &iter);
-	gtk_list_store_set(liststore, &iter, 0, "Processo0", 1, "0", 2, 'R', -1);
-	gtk_list_store_append(liststore, &iter);
-	gtk_list_store_set(liststore, &iter, 0, "Processo1", 1, "1", 2, 'S', -1);
+	for(int i=0; i<10; i++){
+		gtk_list_store_append(liststore, &iter);
+		gtk_list_store_set(liststore, &iter, 0, "Processo", 1, i, 2, "R", 3, "100 MB", -1);
+	}
 	gtk_tree_view_set_model((GtkTreeView*) treeview, (GtkTreeModel*) liststore);
 
 	gtk_widget_show(GTK_WIDGET(window));
