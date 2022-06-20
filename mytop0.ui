@@ -9,79 +9,84 @@
     <child>
       <object class="GtkBox">
         <property name="orientation">vertical</property>
+        
         <child>
-          <object class="GtkTreeView" id="treeview">
-            <property name="hexpand">True</property>            
-            <property name="vexpand">True</property>
-            <property name="enable-grid-lines">both</property>
-
-            <child>
-              <object class="GtkTreeViewColumn">
-                <property name="title">Processo</property>
-                <property name="resizable">True</property>
-                <property name="expand">True</property>
-
-                <child>
-                  <object class="GtkCellRendererText"/>
-                  <attributes>
-                    <attribute name="text">0</attribute>
-                  </attributes>
-                </child>
+          <object class="GtkScrolledWindow">
+          <child>
+            <object class="GtkTreeView" id="treeview">
+              <property name="hexpand">True</property>            
+              <property name="vexpand">True</property>
+              <property name="enable-grid-lines">both</property>
+  
+              <child>
+                <object class="GtkTreeViewColumn">
+                  <property name="title">Processo</property>
+                  <property name="resizable">True</property>
+                  <property name="expand">True</property>
+  
+                  <child>
+                    <object class="GtkCellRendererText"/>
+                    <attributes>
+                      <attribute name="text">0</attribute>
+                    </attributes>
+                  </child>
+                </object>
+              </child>
+  
+              <child>
+                <object class="GtkTreeViewColumn">
+                  <property name="title">PID</property>
+                  <property name="resizable">True</property>
+                  <property name="expand">True</property>
+  
+                  <child>
+                    <object class="GtkCellRendererText"/>
+                    <attributes>
+                      <attribute name="text">1</attribute>
+                    </attributes>
+                  </child>
+                </object>
+              </child>
+  
+              <child>
+                <object class="GtkTreeViewColumn">
+                  <property name="title">Stato</property>
+                  <property name="resizable">True</property>
+                  <property name="expand">True</property>
+  
+                  <child>
+                    <object class="GtkCellRendererText"/>
+                    <attributes>
+                      <attribute name="text">2</attribute>
+                    </attributes>
+                  </child>
+  
+                </object>
+              </child>
+  
+              <child>
+                <object class="GtkTreeViewColumn">
+                  <property name="title">Memoria Utilizzata</property>
+                  <property name="resizable">True</property>
+                  <property name="expand">True</property>
+  
+                  <child>
+                    <object class="GtkCellRendererText"/>
+                    <attributes>
+                      <attribute name="text">3</attribute>
+                    </attributes>
+                  </child>
+  
+                </object>
+              </child>
+  
+            <child internal-child="selection">
+              <object class="GtkTreeSelection" id="selection">
               </object>
             </child>
-
-            <child>
-              <object class="GtkTreeViewColumn">
-                <property name="title">PID</property>
-                <property name="resizable">True</property>
-                <property name="expand">True</property>
-
-                <child>
-                  <object class="GtkCellRendererText"/>
-                  <attributes>
-                    <attribute name="text">1</attribute>
-                  </attributes>
-                </child>
-              </object>
-            </child>
-
-            <child>
-              <object class="GtkTreeViewColumn">
-                <property name="title">Stato</property>
-                <property name="resizable">True</property>
-                <property name="expand">True</property>
-
-                <child>
-                  <object class="GtkCellRendererText"/>
-                  <attributes>
-                    <attribute name="text">2</attribute>
-                  </attributes>
-                </child>
-
-              </object>
-            </child>
-
-            <child>
-              <object class="GtkTreeViewColumn">
-                <property name="title">Memoria Utilizzata</property>
-                <property name="resizable">True</property>
-                <property name="expand">True</property>
-
-                <child>
-                  <object class="GtkCellRendererText"/>
-                  <attributes>
-                    <attribute name="text">3</attribute>
-                  </attributes>
-                </child>
-
-              </object>
-            </child>
-
-          <child internal-child="selection">
-            <object class="GtkTreeSelection" id="selection">
             </object>
           </child>
-          </object>
+        </object>
         </child>
 
         <child>
