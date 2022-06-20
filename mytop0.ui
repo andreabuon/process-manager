@@ -1,0 +1,59 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<interface>
+  <requires lib="gtk" version="4.6"/>
+  <object class="GtkWindow" id="window">
+    <property name="default-height">600</property>
+    <property name="default-width">600</property>
+    <property name="title">Andrea's Top</property>
+    
+    <child>
+      <object class="GtkBox">
+        <property name="halign">baseline</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+    
+        <child>
+          <object class="GtkTreeView" id="treeview">
+            <property name="enable-grid-lines">both</property>
+            <property name="hexpand">True</property>            
+            <property name="vexpand">True</property>
+          </object>
+        </child>
+
+        <child>
+          <object class="GtkBox">
+            <property name="homogeneous">True</property>
+            <property name="spacing">5</property>
+            <property name="margin-start">5</property>
+            <property name="margin-end">5</property>
+            <property name="margin-top">5</property>
+            <property name="margin-bottom">5</property>
+            <child>
+              <object class="GtkButton" id="btn_kill">
+                <property name="label">Kill</property>
+              </object>
+            </child>
+
+            <child>
+              <object class="GtkButton" id="btn_terminate">
+                <property name="label">Terminate</property>
+              </object>
+            </child>
+
+            <child>
+              <object class="GtkButton" id="btn_suspend">
+                <property name="label">Suspend</property>
+              </object>
+            </child>
+
+            <child>
+              <object class="GtkButton" id="btn_resume">
+                <property name="label">Resume</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

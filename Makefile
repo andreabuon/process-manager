@@ -1,5 +1,5 @@
 mytop: mytop.c aux.c
-	gcc -o mytop mytop.c -g
+	gcc -g -o mytop mytop.c `pkg-config --cflags --libs gtk4`
 
 all: mytop
 
