@@ -3,7 +3,7 @@
 //Struttura dati che contiene le informazioni che interessano del processo
 typedef struct info{
 	int pid;
-	char command[17];
+	char command[19]; //16 comando + null terminator + 2 parentesi (sistemare - togliere parentesi)
 	char state;
 	int memory;
 } info;
