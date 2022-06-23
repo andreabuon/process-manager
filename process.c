@@ -54,7 +54,7 @@ info* getProcessInfo(const char *pid){
 	return process_info;
 }
 
-void getProcessesList(){
+list* getProcessesList(){
 	DIR *dir = opendir("/proc/");
 	assert(dir && "Errore apertura directory");
 
@@ -62,15 +62,16 @@ void getProcessesList(){
 	entry = readdir(dir);
 	assert(entry && "Errore lettura directory");
 
+	list* lista = list_new();
+
 	while(entry){
 		// Stampa solo le entry delle directory che corrispondono a processi 
 		// ovvero quelle che hanno come nome un numero [il pid]
 		if(entry->d_type == DT_DIR && isNumber(entry->d_name)){
-			info* process_info = getProcessInfo(entry->d_name);
-			info_print(process_info);
-			info_free(process_info);
+			list_append(lista, getProcessInfo(entry->d_name));
 		}
 		entry = readdir(dir);
 	}
 	closedir(dir);
+	return lista;
 }

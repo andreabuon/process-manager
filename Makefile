@@ -1,4 +1,6 @@
-all: mytop.o process.o util.o
+all: mytop
+
+mytop: mytop.o process.o util.o list.o
 	gcc -Wall -o mytop *.o `pkg-config --libs gtk4`
 
 mytop.o: mytop.c
@@ -9,6 +11,9 @@ process.o: process.c
 
 util.o: util.c
 	gcc -Wall -c util.c 
+
+list.o: list.c
+	gcc -Wall -c list.c
 
 clean:
 	rm mytop *.o
