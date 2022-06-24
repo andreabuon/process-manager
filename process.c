@@ -45,6 +45,7 @@ info* getProcessInfo(const char *pid){
 	assert(read_chars>0 && "Errore lettura file stat del processo");
 
 	info* process_info = info_new();
+	// man 5 proc
 	int ret = sscanf(line, "%d %s %c", &(process_info->pid), (process_info->command), &(process_info->state)); //sistemare
 	assert(ret>0 && "Errore Scanf");
 

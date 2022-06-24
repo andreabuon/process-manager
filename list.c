@@ -1,6 +1,10 @@
 #include <stdlib.h>
 #include "list.h"
 
+//forward declaration
+extern void info_free();
+//--
+
 listItem* listItem_new(info* proc){
 	listItem* elem = malloc(sizeof(listItem));
 	elem->proc = proc;
@@ -9,7 +13,7 @@ listItem* listItem_new(info* proc){
 }
 
 void listItem_free(listItem* elem){
-	free(elem->proc);
+	info_free(elem->proc);
 	free(elem);
 }
 
