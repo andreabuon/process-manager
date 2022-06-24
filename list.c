@@ -41,7 +41,7 @@ void list_free(list* lista){
 	listItem* elem = lista->first;
 	while(elem){
 		listItem* e = elem;
-		elem = lista->first->next;
+		elem = elem->next;
 		listItem_free(e);
 	}
 	free(lista);

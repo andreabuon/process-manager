@@ -135,28 +135,3 @@
     </child>
   </object>
 </interface>
-
-
-<!-- 
-  <child>
-            <object class="GtkListStore" id="liststore">
-              <columns>
-                <column type="gchararray"/>
-                <column type="gint"/>
-                <column type="gchararray"/>
-              </columns>
-            <data>
-              <row>
-                  <col id="0">Processo0</col>
-                  <col id="1">0</col>
-                  <col id="2">R</col>
-                </row>
-                <row>
-                  <col id="0">Processo1</col>
-                  <col id="1">1</col>
-                  <col id="2">S</col>
-                </row>
-              </data>
-            </object>
-          </child>
--->

@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include "util.h"
 
 int isNumber(const char* string){
