@@ -4,8 +4,9 @@
 #include "handlers.c"
 
 GObject *treeview; //sistemare
+GtkListStore *liststore; //sistemare
 
-void aggiungiProcessi(GtkListStore *liststore){
+void caricaProcessi(GtkListStore *liststore){
 	GtkTreeIter iter;
 	list* processList = getProcessesList();
 
@@ -15,6 +16,13 @@ void aggiungiProcessi(GtkListStore *liststore){
 		gtk_list_store_set(liststore, &iter, 0, entry->proc->command, 1, entry->proc->pid, 2, entry->proc->state, 3, 100, -1);
 		entry = entry->next;
 	}
+}
+
+void aggiornaProcessi(){
+	gtk_tree_view_set_model((GtkTreeView*) treeview, NULL);
+	gtk_list_store_clear(liststore);
+	caricaProcessi(liststore);
+	gtk_tree_view_set_model((GtkTreeView*) treeview, (GtkTreeModel*) liststore);
 }
 
 pid_t getSelectedProcessPID(){
@@ -38,9 +46,9 @@ static void activate(GtkApplication *app, gpointer user_data)
 	gtk_window_set_application(GTK_WINDOW(window), app);
 	
 	treeview = gtk_builder_get_object(builder, "treeview");
-	GtkListStore *liststore = gtk_list_store_new(4, G_TYPE_STRING, G_TYPE_INT, G_TYPE_CHAR, G_TYPE_UINT); //sistemare, non visualizza il carattere ma int corrispondente
-	aggiungiProcessi(liststore);
-	gtk_tree_view_set_model((GtkTreeView*) treeview, (GtkTreeModel*) liststore);
+	liststore = gtk_list_store_new(4, G_TYPE_STRING, G_TYPE_INT, G_TYPE_CHAR, G_TYPE_UINT); //sistemare, non visualizza il carattere ma int corrispondente
+	
+	aggiornaProcessi();
 
 	GObject *btn_kill = gtk_builder_get_object(builder, "btn_kill");
 	g_signal_connect(btn_kill, "clicked", G_CALLBACK(killProcess), NULL);
@@ -50,8 +58,8 @@ static void activate(GtkApplication *app, gpointer user_data)
 	g_signal_connect(btn_suspend, "clicked", G_CALLBACK(suspendProcess), NULL);
 	GObject *btn_resume = gtk_builder_get_object(builder, "btn_resume");
 	g_signal_connect(btn_resume, "clicked", G_CALLBACK(resumeProcess), NULL);
-	/*GObject *btn_refresh = gtk_builder_get_object(builder, "btn_refresh");
-	g_signal_connect(btn_refresh, "clicked", G_CALLBACK(refreshProcesses), NULL);*/
+	GObject *btn_refresh = gtk_builder_get_object(builder, "btn_refresh");
+	g_signal_connect(btn_refresh, "clicked", G_CALLBACK(aggiornaProcessi), NULL);
 
 	gtk_widget_show(GTK_WIDGET(window));
 

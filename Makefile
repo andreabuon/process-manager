@@ -3,7 +3,7 @@ all: mytop
 mytop: mytop.o process.o util.o list.o
 	gcc -Wall -o mytop *.o `pkg-config --libs gtk4`
 
-mytop.o: mytop.c
+mytop.o: mytop.c handlers.c
 	gcc -Wall -c mytop.c `pkg-config --cflags gtk4`
 
 process.o: process.c process.h
