@@ -21,7 +21,7 @@ list* list_new(){
 
 void list_init(list* lista){
 	lista->first = 0;
-	lista->first = 0;
+	lista->last = 0;
 	lista->size = 0;
 }
 

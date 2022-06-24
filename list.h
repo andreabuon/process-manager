@@ -1,8 +1,7 @@
 //forward declarations
 typedef struct info info;
-
 typedef struct listItem listItem;
-//
+//----
 
 typedef struct listItem {
 	info* proc;

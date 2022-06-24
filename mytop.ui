@@ -121,6 +121,14 @@
               </object>
             </child>
 
+            <!--
+            <child>
+              <object class="GtkButton" id="btn_refresh">
+                <property name="label">Refresh</property>
+              </object>
+            </child>
+            -->
+
           </object>
         </child>
 

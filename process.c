@@ -68,7 +68,8 @@ list* getProcessesList(){
 		// Stampa solo le entry delle directory che corrispondono a processi 
 		// ovvero quelle che hanno come nome un numero [il pid]
 		if(entry->d_type == DT_DIR && isNumber(entry->d_name)){
-			list_append(lista, getProcessInfo(entry->d_name));
+			info* process_info = getProcessInfo(entry->d_name);
+			list_append(lista, process_info);
 		}
 		entry = readdir(dir);
 	}
