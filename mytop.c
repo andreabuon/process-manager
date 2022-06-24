@@ -15,7 +15,7 @@ void caricaProcessi(GtkListStore *liststore){
 	listItem* entry = processList->first;
 	while(entry){		
 		gtk_list_store_append(liststore, &iter);
-		gtk_list_store_set(liststore, &iter, 0, entry->proc->command, 1, entry->proc->pid, 2, entry->proc->state, 3, 100, -1); //sistemare
+		gtk_list_store_set(liststore, &iter, 0, entry->proc->command, 1, entry->proc->pid, 2, entry->proc->state, 3, entry->proc->memory, -1); //sistemare
 		entry = entry->next;
 	}
 	list_free(processList);

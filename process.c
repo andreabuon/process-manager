@@ -46,7 +46,7 @@ info* getProcessInfo(const char *pid){
 
 	info* process_info = info_new();
 	// man 5 proc
-	int ret = sscanf(line, "%d %s %c", &(process_info->pid), (process_info->command), &(process_info->state)); //sistemare
+	int ret = sscanf(line, "%d %s %c %*d %*d %*d %*d %*d %*u %*lu %*lu %*lu %*lu %*lu %*lu %*ld %*ld %*ld %*ld %*ld %*ld %*llu %lu", &(process_info->pid), (process_info->command), &(process_info->state), &(process_info->memory)); //sistemare
 	assert(ret>0 && "Errore Scanf");
 
 	free(line);

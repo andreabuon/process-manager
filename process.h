@@ -5,7 +5,7 @@ typedef struct info{
 	pid_t pid;
 	char command[19]; //16 comando + null terminator + 2 parentesi (sistemare - togliere parentesi)
 	char state;
-	unsigned int memory;
+	long unsigned int memory;
 } info;
 
 //Alloca una nuova struttura info e ne restituisce il puntatore
