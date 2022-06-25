@@ -5,7 +5,7 @@
 
 #define DEBUG 1
 
-GObject *treeview; //sistemare
+GtkTreeView *treeview; //sistemare
 GtkListStore *liststore; //sistemare
 
 void caricaProcessi(GtkListStore *liststore){
@@ -21,16 +21,15 @@ void caricaProcessi(GtkListStore *liststore){
 	list_free(processList);
 }
 
-void aggiornaProcessi(){
-	gtk_tree_view_set_model((GtkTreeView*) treeview, NULL);
+void aggiornaLista(){
+	gtk_tree_view_set_model(treeview, NULL);
 	gtk_list_store_clear(liststore);
 	caricaProcessi(liststore);
-	gtk_tree_view_set_model((GtkTreeView*) treeview, (GtkTreeModel*) liststore);
+	gtk_tree_view_set_model(treeview, (GtkTreeModel*) liststore);
 }
 
 pid_t getSelectedProcessPID(){
-	GtkTreeSelection* treeSelection = gtk_tree_view_get_selection((GtkTreeView*) treeview);
-	//GtkTreeModel* model;
+	GtkTreeSelection* treeSelection = gtk_tree_view_get_selection(treeview);
 	GtkTreeIter iter;
 	pid_t pid;
 	gtk_tree_selection_get_selected(treeSelection, NULL, &iter);
@@ -51,7 +50,7 @@ static void activate(GtkApplication *app, gpointer user_data)
 	GObject *window = gtk_builder_get_object(builder, "window");
 	gtk_window_set_application(GTK_WINDOW(window), app);
 	
-	treeview = gtk_builder_get_object(builder, "treeview");
+	treeview = (GtkTreeView*) gtk_builder_get_object(builder, "treeview");
 	liststore = gtk_list_store_new(4, G_TYPE_STRING, G_TYPE_INT, G_TYPE_CHAR, G_TYPE_UINT); //sistemare, non visualizza il carattere ma int corrispondente
 	
 	GObject *btn_kill = gtk_builder_get_object(builder, "btn_kill");
@@ -63,9 +62,9 @@ static void activate(GtkApplication *app, gpointer user_data)
 	GObject *btn_resume = gtk_builder_get_object(builder, "btn_resume");
 	g_signal_connect(btn_resume, "clicked", G_CALLBACK(resumeProcess), NULL);
 	GObject *btn_refresh = gtk_builder_get_object(builder, "btn_refresh");
-	g_signal_connect(btn_refresh, "clicked", G_CALLBACK(aggiornaProcessi), NULL);
+	g_signal_connect(btn_refresh, "clicked", G_CALLBACK(aggiornaLista), NULL);
 
-	aggiornaProcessi();
+	aggiornaLista();
 
 	gtk_widget_show(GTK_WIDGET(window));
 

@@ -46,7 +46,7 @@ info* getProcessInfo(const char *pid){
 
 	info* process_info = info_new();
 	// man 5 proc
-	int ret = sscanf(line, "%d %s %c %*d %*d %*d %*d %*d %*u %*lu %*lu %*lu %*lu %*lu %*lu %*ld %*ld %*ld %*ld %*ld %*ld %*llu %lu", &(process_info->pid), (process_info->command), &(process_info->state), &(process_info->memory)); //sistemare
+	int ret = sscanf(line, "%d %s %c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*d %*d %*d %*u %lu", &(process_info->pid), (process_info->command), &(process_info->state), &(process_info->memory)); //sistemare
 	assert(ret>0 && "Errore Scanf");
 
 	free(line);
@@ -66,8 +66,8 @@ list* getProcessesList(){
 	list* lista = list_new();
 
 	while(entry){
-		// Stampa solo le entry delle directory che corrispondono a processi 
-		// ovvero quelle che hanno come nome un numero [il pid]
+		// Valuta solo le entry delle directory che corrispondono a processi 
+		// ovvero quelle che hanno come nome un numero [il pid del processo]
 		if(entry->d_type == DT_DIR && isNumber(entry->d_name)){
 			info* process_info = getProcessInfo(entry->d_name);
 			list_append(lista, process_info);
