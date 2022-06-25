@@ -21,6 +21,7 @@ void info_print(const info* process_info){
 }
 
 void info_free(info* process_info){
+	free(process_info->command);
 	free(process_info);
 }
 
@@ -45,11 +46,15 @@ info* getProcessInfo(const char *pid){
 	assert(read_chars>0 && "Errore lettura file stat del processo");
 
 	info* process_info = info_new();
-	// man 5 proc
-	//%s e %[] aggiungono in automatico il null terminator
-	int ret = sscanf(line, "%d (%30[^)]) %s %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*d %*d %*d %*u %lu", &(process_info->pid), (process_info->command), (process_info->state), &(process_info->memory)); //sistemare
-	//sistemare
-	//info_print(process_info);
+	//man 5 proc
+	/*scanf legge in ordine:
+	%d PID
+	(%m[^)]) Nome dell'eseguibile del processo, togliendo le parentesi tonde iniziali e finali. Alloca automaticamente la memoria necessaria per contenere la stringa e il null terminator. Il null terminator viene aggiunto automaticamente
+	%1s Stato del processo. Lo stato è descritto da 1 carattere. Viene aggiunto null terminator alla fine 
+	%* valori ignorati
+	%lu Memoria del processo
+	*/
+	int ret = sscanf(line, "%d (%m[^)]) %1s %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*d %*d %*d %*u %lu", &(process_info->pid), &(process_info->command), (process_info->state), &(process_info->memory)); //sistemare
 	assert(ret>0 && "Errore Scanf");
 
 	free(line);
