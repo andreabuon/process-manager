@@ -1,10 +1,13 @@
 #include "list.h"
 
+#define COMMAND_LEN 30
+#define STATE_LEN 2
+
 //Struttura dati che contiene le informazioni che interessano del processo
 typedef struct info{
 	pid_t pid;
-	char command[19]; //16 comando + null terminator + 2 parentesi (sistemare - togliere parentesi)
-	char state;
+	char command[COMMAND_LEN]; //16 comando + null terminator + 1 parentesi (sistemare - togliere parentesi)
+	char state[STATE_LEN];
 	long unsigned int memory;
 } info;
 

@@ -17,7 +17,7 @@ info* info_new(){
 }
 
 void info_print(const info* process_info){
-	printf("%d %s %c\n", process_info->pid, process_info->command, process_info->state);
+	printf("%d %s %s %lu\n", process_info->pid, process_info->command, process_info->state, process_info->memory);
 }
 
 void info_free(info* process_info){
@@ -46,7 +46,10 @@ info* getProcessInfo(const char *pid){
 
 	info* process_info = info_new();
 	// man 5 proc
-	int ret = sscanf(line, "%d %s %c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*d %*d %*d %*u %lu", &(process_info->pid), (process_info->command), &(process_info->state), &(process_info->memory)); //sistemare
+	//%s e %[] aggiungono in automatico il null terminator
+	int ret = sscanf(line, "%d (%30[^)]) %s %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*d %*d %*d %*u %lu", &(process_info->pid), (process_info->command), (process_info->state), &(process_info->memory)); //sistemare
+	//sistemare
+	//info_print(process_info);
 	assert(ret>0 && "Errore Scanf");
 
 	free(line);

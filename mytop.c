@@ -51,7 +51,7 @@ static void activate(GtkApplication *app, gpointer user_data)
 	gtk_window_set_application(GTK_WINDOW(window), app);
 	
 	treeview = (GtkTreeView*) gtk_builder_get_object(builder, "treeview");
-	liststore = gtk_list_store_new(4, G_TYPE_STRING, G_TYPE_INT, G_TYPE_CHAR, G_TYPE_UINT); //sistemare, non visualizza il carattere ma int corrispondente
+	liststore = gtk_list_store_new(4, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING, G_TYPE_UINT);
 	
 	GObject *btn_kill = gtk_builder_get_object(builder, "btn_kill");
 	g_signal_connect(btn_kill, "clicked", G_CALLBACK(killProcess), NULL);
