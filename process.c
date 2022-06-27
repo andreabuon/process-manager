@@ -4,12 +4,9 @@
 #include <dirent.h>
 #include <assert.h>
 #include <sys/types.h>
-#include <string.h>
 
 #include "process.h"
 #include "util.h"
-
-#define PATH_LEN 256
 
 info* info_new(){
 	info* process_info = malloc(sizeof(info));
@@ -25,19 +22,10 @@ void info_free(info* process_info){
 	free(process_info);
 }
 
-// Dato un PID assembla e restituisce la stringa: "/proc/[pid]/stat"
-char* buildPathByPID(const char* pid){
-	char *path = calloc(PATH_LEN, sizeof(char));
-	strcat(path, "/proc/");
-	strcat(path, pid);
-	strcat(path, "/stat");
-	return path;
-}
-
 info* getProcessInfo(const char *pid){
-	char* path = buildPathByPID(pid);
+	char* stat_path = cuncatenateStrings("/proc/", pid, "/stat");
 
-	FILE *file = fopen(path, "r");
+	FILE *file = fopen(stat_path, "r");
 	assert(file && "Errore apertura file");
 
 	info* process_info = info_new();
@@ -53,7 +41,7 @@ info* getProcessInfo(const char *pid){
 	int ret = fscanf(file, "%d (%m[^)]) %1s %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*d %*d %*d %*u %lu", &(process_info->pid), &(process_info->command), (process_info->state), &(process_info->memory)); //sistemare
 	assert(ret>0 && "Errore Scanf");
 
-	free(path);
+	free(stat_path);
 	fclose(file);
 	return process_info;
 }
