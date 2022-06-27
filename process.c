@@ -40,24 +40,19 @@ info* getProcessInfo(const char *pid){
 	FILE *file = fopen(path, "r");
 	assert(file && "Errore apertura file");
 
-	char* line = NULL;
-	size_t n;
-	int read_chars = getline(&line, &n, file);
-	assert(read_chars>0 && "Errore lettura file stat del processo");
-
 	info* process_info = info_new();
 	//man 5 proc
-	/*scanf legge in ordine:
-	%d PID
-	(%m[^)]) Nome dell'eseguibile del processo, togliendo le parentesi tonde iniziali e finali. Alloca automaticamente la memoria necessaria per contenere la stringa e il null terminator. Il null terminator viene aggiunto automaticamente
-	%1s Stato del processo. Lo stato è descritto da 1 carattere. Viene aggiunto null terminator alla fine 
+	/*
+	fscanf legge in ordine:
+	%d PID del processo
+	(%m[^)]) Nome dell'eseguibile del processo, togliendo le parentesi tonde iniziali e finali. Alloca automaticamente la memoria necessaria per contenere la stringa e il null terminator. Il null terminator viene aggiunto automaticamente. Supporta anche nomi che contengono spazi (al contrario di %s)
+	%1s Stato del processo. Lo stato è descritto da 1 carattere. Ho usato %s invece di %c in modo da aggiungere automaticamente il null terminator dopo il carattere.
 	%* valori ignorati
 	%lu Memoria del processo
 	*/
-	int ret = sscanf(line, "%d (%m[^)]) %1s %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*d %*d %*d %*u %lu", &(process_info->pid), &(process_info->command), (process_info->state), &(process_info->memory)); //sistemare
+	int ret = fscanf(file, "%d (%m[^)]) %1s %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*d %*d %*d %*u %lu", &(process_info->pid), &(process_info->command), (process_info->state), &(process_info->memory)); //sistemare
 	assert(ret>0 && "Errore Scanf");
 
-	free(line);
 	free(path);
 	fclose(file);
 	return process_info;
