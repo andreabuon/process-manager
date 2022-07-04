@@ -2,6 +2,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "util.h"
 
 int isNumber(const char* string){
@@ -21,7 +22,10 @@ char* cuncatenateStrings(const char *string0, const char *string1, const char *s
 	lenght = len0 + len1 + len2 + 1; // +1 = null terminator!!
 	
 	char* res = malloc(lenght*sizeof(char));
-	assert(res && "Errore allocazione stringa");
+	if(!res){
+		perror("Errore allocazione stringa");
+		return NULL;
+	}
 
 	strncpy(res, string0, len0);
 	strncat(res, string1, len1);

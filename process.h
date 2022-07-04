@@ -18,7 +18,7 @@ void info_free(info* process_info);
 //Stampa su console i dati del processo salvati nella struttura info in input
 void info_print(const info* process_info);
 
-//Crea una nuova struttura info con le informazioni relative al processo (il cui pid è passato in input) e ne ritorna il puntatore.
+//Crea una nuova struttura info con le informazioni relative al processo (il cui pid è passato in input) e ne ritorna il puntatore. Ritorna NULL in caso di errore.
 info* getProcessInfo(const char* pid);
 
 //Crea lista processi in esecuzione.

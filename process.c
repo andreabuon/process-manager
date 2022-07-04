@@ -4,12 +4,17 @@
 #include <dirent.h>
 #include <assert.h>
 #include <sys/types.h>
+#include <errno.h>
 
 #include "process.h"
 #include "util.h"
 
 info* info_new(){
 	info* process_info = malloc(sizeof(info));
+	if(!process_info){
+		perror("Errore allocazione Info");
+		return NULL;
+	}
 	return process_info;
 }
 
@@ -24,12 +29,24 @@ void info_free(info* process_info){
 
 info* getProcessInfo(const char *pid){
 	char* stat_path = cuncatenateStrings("/proc/", pid, "/stat");
+	if(!stat_path){
+		perror("Errore Creazione Stringa Path");
+		return NULL;
+	}
 
 	FILE *file = fopen(stat_path, "r");
-	assert(file && "Errore apertura file");
+	if(!file){
+		perror("Errore apertura file");
+		free(stat_path);
+		return NULL;
+	}
 
 	info* process_info = info_new();
-	//man 5 proc
+	if(!process_info){
+		free(stat_path);
+		fclose(file);
+		return NULL;
+	}
 	/*
 	fscanf legge in ordine:
 	%d PID del processo
@@ -37,9 +54,17 @@ info* getProcessInfo(const char *pid){
 	%1s Stato del processo. Lo stato è descritto da 1 carattere. Ho usato %s invece di %c in modo da aggiungere automaticamente il null terminator dopo il carattere.
 	%* valori ignorati
 	%lu Memoria virtuale del processo
+	per altro leggere 'man 5 proc'
 	*/
-	int ret = fscanf(file, "%d (%m[^)]) %1s %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*d %*d %*d %*u %lu", &(process_info->pid), &(process_info->command), (process_info->state), &(process_info->memory)); //sistemare
-	assert(ret && ret!=EOF && "Errore Scanf");
+	int ret;
+	ret = fscanf(file, "%d (%m[^)]) %1s %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*d %*d %*d %*u %lu", &(process_info->pid), &(process_info->command), (process_info->state), &(process_info->memory)); //sistemare
+	if(ret==EOF){
+		perror("Errore scanf");
+		info_free(process_info);
+		free(stat_path);
+		fclose(file);
+		return NULL;
+	}
 
 	free(stat_path);
 	fclose(file);
@@ -48,24 +73,45 @@ info* getProcessInfo(const char *pid){
 
 List* getProcessesList(){
 	DIR *dir = opendir("/proc/");
-	assert(dir && "Errore apertura directory");
+	if(!dir){
+		perror("Errore apertura directory");
+		return NULL;
+	}
 
 	List* lista = List_new();
-	//if(!lista) return lista;
-	assert(lista && "Errore creazione lista");
+	if(!lista){
+		closedir(dir);
+		return NULL;
+	}
 
 	struct dirent *entry;
+	errno = 0;
 	entry = readdir(dir);
-	assert(entry && "Errore lettura directory");
+	if(!entry && errno){
+		perror("Errore lettura directory");
+		List_free(lista);
+		closedir(dir);
+		return NULL;
+	}
 
 	while(entry){
 		// Valuta solo le entry delle directory che corrispondono a processi 
 		// ovvero quelle che hanno come nome un numero [il pid del processo]
 		if(entry->d_type == DT_DIR && isNumber(entry->d_name)){
 			info* process_info = getProcessInfo(entry->d_name);
+			if(!process_info){
+				fprintf(stderr, "Errore Lettura Info Processo %s.\n", entry->d_name);
+				entry = readdir(dir);		
+				continue;
+			}
 			List_append(lista, process_info);
 		}
 		entry = readdir(dir);
+	}
+	if(!entry && errno){
+			perror("Errore lettura directory");
+			closedir(dir);
+			return lista;
 	}
 	closedir(dir);
 	return lista;
