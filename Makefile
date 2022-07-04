@@ -2,11 +2,14 @@ FLAGS=-Wall -g
 
 all: mytop
 
-mytop: mytop.o process.o util.o list.o
+mytop: mytop.o process.o handlers.o util.o list.o
 	gcc $(FLAGS) -o mytop *.o `pkg-config --libs gtk4`
 
-mytop.o: mytop.c handlers.c
+mytop.o: mytop.c
 	gcc $(FLAGS) -c mytop.c `pkg-config --cflags gtk4`
+
+handlers.o: handlers.c handlers.h
+	gcc $(FLAGS) -c handlers.c
 
 process.o: process.c process.h
 	gcc $(FLAGS) -c process.c
