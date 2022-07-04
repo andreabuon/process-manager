@@ -1,36 +1,45 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "list.h"
 
 //forward declaration
-extern void info_free();
-//--
+extern void info_free(); //sistemare
 
-listItem* listItem_new(info* proc){
-	listItem* elem = malloc(sizeof(listItem));
-	elem->proc = proc;
-	elem->next = 0;
+ListItem* ListItem_new(info* val){
+	ListItem* elem = malloc(sizeof(ListItem));
+	if(!elem){
+		perror("Errore allocazione ListItem");
+		return NULL;
+	}
+	elem->next = NULL;
+	elem->data = val;
 	return elem;
 }
 
-void listItem_free(listItem* elem){
-	info_free(elem->proc);
+void ListItem_free(ListItem* elem){
+	info_free(elem->data); //sistemare
 	free(elem);
 }
 
-list* list_new(){
-	list* lista = malloc(sizeof(list));
-	list_init(lista);
+List* List_new(){
+	List* lista = malloc(sizeof(List));
+	if(!lista){
+		perror("Errore allocazione Lista");
+		return NULL;
+	}
+	List_init(lista);
 	return lista;
 }
 
-void list_init(list* lista){
-	lista->first = 0;
-	lista->last = 0;
+void List_init(List* lista){
+	lista->first = NULL;
+	lista->last = NULL;
 	lista->size = 0;
 }
 
-void list_append(list* lista, info* proc){
-	listItem* elem = listItem_new(proc);
+int List_append(List* lista, info* val){
+	ListItem* elem = ListItem_new(val);
+	if(!elem) return -1;
 	if(!lista->first){
 		lista->first = elem;
 	}
@@ -39,14 +48,15 @@ void list_append(list* lista, info* proc){
 	}
 	lista->last = elem;
 	lista->size++;
+	return 0;
 }
 
-void list_free(list* lista){
-	listItem* elem = lista->first;
+void List_free(List* lista){
+	ListItem* elem = lista->first;
 	while(elem){
-		listItem* e = elem;
+		ListItem* e = elem;
 		elem = elem->next;
-		listItem_free(e);
+		ListItem_free(e);
 	}
 	free(lista);
 }

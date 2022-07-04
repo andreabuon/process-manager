@@ -1,23 +1,36 @@
-//forward declarations
+#ifndef LIST_H
+#define LIST_H
+
+//forward declaration
 typedef struct info info;
-typedef struct listItem listItem;
-//----
 
-typedef struct listItem {
-	info* proc;
-	listItem* next;
-} listItem;
+typedef struct ListItem {
+	struct ListItem* next;
+	info* data;
+} ListItem;
 
-typedef struct list {
-	listItem* first;
-	listItem* last;
+typedef struct List {
+	ListItem* first;
+	ListItem* last;
 	unsigned int size;
-} list;
+} List;
 
-listItem* listItem_new(info* proc);
-void listItem_free(listItem* elem);
+//Crea e restituisce un nuovo ListItem con l'informazione passata come argomento. Ritorna NULL in caso di errore.
+ListItem* ListItem_new(info* val);
 
-list* list_new();
-void list_init(list* list);
-void list_append(list* list, info* proc);
-void list_free(list* list);
+//Dealloca un ListItem.
+void ListItem_free(ListItem* elem);
+
+//Crea e restituisce una nuova Lista. Ritorna NULL in caso di errore.
+List* List_new();
+
+//Imposta a NULL e a 0 i campi della lista in input.
+void List_init(List* list);
+
+//Aggiunge alla fine della Lista list un nuovo ListItem che contiene i dati val. Restituisce -1 in caso di errore.
+int List_append(List* list, info* val);
+
+//Dealloca la Lista list e tutti i suoi ListItem.
+void List_free(List* list);
+
+#endif

@@ -33,35 +33,37 @@ info* getProcessInfo(const char *pid){
 	/*
 	fscanf legge in ordine:
 	%d PID del processo
-	(%m[^)]) Nome dell'eseguibile del processo, togliendo le parentesi tonde iniziali e finali. Alloca automaticamente la memoria necessaria per contenere la stringa e il null terminator. Il null terminator viene aggiunto automaticamente. Supporta anche nomi che contengono spazi (al contrario di %s)
+	(%m[^)]) Nome dell'eseguibile del processo, togliendo la parentesi tonda iniziale e finale. Alloca automaticamente la memoria necessaria per contenere la stringa e il null terminator. Il null terminator viene aggiunto automaticamente. Supporta anche nomi che contengono spazi (al contrario di %s)
 	%1s Stato del processo. Lo stato è descritto da 1 carattere. Ho usato %s invece di %c in modo da aggiungere automaticamente il null terminator dopo il carattere.
 	%* valori ignorati
-	%lu Memoria del processo
+	%lu Memoria virtuale del processo
 	*/
 	int ret = fscanf(file, "%d (%m[^)]) %1s %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*d %*d %*d %*u %lu", &(process_info->pid), &(process_info->command), (process_info->state), &(process_info->memory)); //sistemare
-	assert(ret>0 && "Errore Scanf");
+	assert(ret && ret!=EOF && "Errore Scanf");
 
 	free(stat_path);
 	fclose(file);
 	return process_info;
 }
 
-list* getProcessesList(){
+List* getProcessesList(){
 	DIR *dir = opendir("/proc/");
 	assert(dir && "Errore apertura directory");
+
+	List* lista = List_new();
+	//if(!lista) return lista;
+	assert(lista && "Errore creazione lista");
 
 	struct dirent *entry;
 	entry = readdir(dir);
 	assert(entry && "Errore lettura directory");
-
-	list* lista = list_new();
 
 	while(entry){
 		// Valuta solo le entry delle directory che corrispondono a processi 
 		// ovvero quelle che hanno come nome un numero [il pid del processo]
 		if(entry->d_type == DT_DIR && isNumber(entry->d_name)){
 			info* process_info = getProcessInfo(entry->d_name);
-			list_append(lista, process_info);
+			List_append(lista, process_info);
 		}
 		entry = readdir(dir);
 	}

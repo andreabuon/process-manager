@@ -1,3 +1,4 @@
+#pragma once
 #include "list.h"
 
 //Struttura dati che contiene le informazioni che interessano del processo
@@ -21,4 +22,4 @@ void info_print(const info* process_info);
 info* getProcessInfo(const char* pid);
 
 //Crea lista processi in esecuzione.
-list* getProcessesList();
+List* getProcessesList();

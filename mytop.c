@@ -1,6 +1,7 @@
 #include <gtk/gtk.h>
 
 #include "process.h"
+#include "list.h"
 #include "handlers.h"
 
 #define DEBUG 1
@@ -12,15 +13,16 @@ GtkListStore *liststore; //sistemare
 
 void caricaProcessi(GtkListStore *liststore){
 	GtkTreeIter iter;
-	list* processList = getProcessesList();
+	List* processList = getProcessesList();
 
-	listItem* entry = processList->first;
+	ListItem* entry = processList->first;
 	while(entry){		
 		gtk_list_store_append(liststore, &iter);
-		gtk_list_store_set(liststore, &iter, 0, entry->proc->command, 1, entry->proc->pid, 2, entry->proc->state, 3, entry->proc->memory, -1); //sistemare
+		info* process = entry->data;
+		gtk_list_store_set(liststore, &iter, 0, process->command, 1, process->pid, 2, process->state, 3, process->memory, -1); //sistemare
 		entry = entry->next;
 	}
-	list_free(processList);
+	List_free(processList);
 }
 
 void aggiornaLista(){
