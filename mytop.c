@@ -8,6 +8,7 @@
 GtkTreeView *treeview; //sistemare
 GtkListStore *liststore; //sistemare
 
+//Ottiene la lista dei processi in esecuzione e li carica nella GtkListStore in input
 void caricaProcessi(GtkListStore *liststore){
 	List* processList = getProcessesList();
 	if(!processList){
@@ -27,6 +28,7 @@ void caricaProcessi(GtkListStore *liststore){
 	List_free(processList);
 }
 
+//Aggiorna TreeView 
 void aggiornaLista(){
 	gtk_tree_view_set_model(treeview, NULL); //rimuove il modello corrente
 	gtk_list_store_clear(liststore); //elimina tutte le righe dal modello corrente
@@ -34,20 +36,27 @@ void aggiornaLista(){
 	gtk_tree_view_set_model(treeview, (GtkTreeModel*) liststore); //imposta il modello aggiornato
 }
 
+//Ritorna il pid_t del processo selezionato nella ListView. Ritorna -1 se nessuna riga è stata selezionata.
 pid_t getSelectedProcessPID(){
 	GtkTreeSelection* treeSelection = gtk_tree_view_get_selection(treeview);
 	GtkTreeIter iter;
+	gboolean res = gtk_tree_selection_get_selected(treeSelection, NULL, &iter);
+	if(!res){
+		fprintf(stderr, "Nessuna riga selezionata.\n");
+		return -1;
+	}
+
 	pid_t pid;
-	gtk_tree_selection_get_selected(treeSelection, NULL, &iter);
 	gtk_tree_model_get((GtkTreeModel*) liststore, &iter, 1, &pid, -1);
 	
 	#ifdef DEBUG
-		printf("Selected process %d.\n", pid);
+		printf("Selezionato processo %d.\n", pid);
 	#endif
 
 	return pid;
 }
 
+//Costruisce la finestra e i vari elementi
 static void activate(GtkApplication *app, gpointer user_data)
 {
 	GtkBuilder *builder = gtk_builder_new();

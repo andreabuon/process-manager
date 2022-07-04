@@ -9,6 +9,9 @@ extern void aggiornaLista();
 
 void sendSignal(int signal_n){
 	pid_t pid = getSelectedProcessPID();
+	if(pid<0){
+		return;
+	}
 	int ret = kill(pid, signal_n);
 	if(ret){
 		perror("Errore invio segnale");
