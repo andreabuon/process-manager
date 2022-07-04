@@ -1,4 +1,4 @@
-FLAGS=-Wall -g
+FLAGS=-Wall -g -DDEBUG
 
 all: mytop
 

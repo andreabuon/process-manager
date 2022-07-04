@@ -2,10 +2,8 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <dirent.h>
-#include <assert.h>
 #include <sys/types.h>
 #include <errno.h>
-
 #include "process.h"
 #include "util.h"
 
@@ -30,7 +28,7 @@ void info_free(info* process_info){
 info* getProcessInfo(const char *pid){
 	char* stat_path = cuncatenateStrings("/proc/", pid, "/stat");
 	if(!stat_path){
-		perror("Errore Creazione Stringa Path");
+		fprintf(stderr, "Errore Creazione Stringa Path.\n");	
 		return NULL;
 	}
 
@@ -56,10 +54,14 @@ info* getProcessInfo(const char *pid){
 	%lu Memoria virtuale del processo
 	per altro leggere 'man 5 proc'
 	*/
-	int ret;
-	ret = fscanf(file, "%d (%m[^)]) %1s %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*d %*d %*d %*u %lu", &(process_info->pid), &(process_info->command), (process_info->state), &(process_info->memory)); //sistemare
+	int ret = fscanf(file,
+					"%d (%m[^)]) %1s %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*d %*d %*d %*u %lu",
+					&(process_info->pid),
+					&(process_info->command),
+					(process_info->state),
+					&(process_info->memory)); //sistemare
 	if(ret==EOF){
-		perror("Errore scanf");
+		perror("Errore fscanf");
 		info_free(process_info);
 		free(stat_path);
 		fclose(file);
@@ -84,34 +86,24 @@ List* getProcessesList(){
 		return NULL;
 	}
 
-	struct dirent *entry;
-	errno = 0;
-	entry = readdir(dir);
-	if(!entry && errno){
-		perror("Errore lettura directory");
-		List_free(lista);
-		closedir(dir);
-		return NULL;
-	}
-
-	while(entry){
-		// Valuta solo le entry delle directory che corrispondono a processi 
-		// ovvero quelle che hanno come nome un numero [il pid del processo]
+	for(;;){
+		errno = 0;
+		struct dirent *entry = readdir(dir);
+		// Se si raggiunge la fine della directory (entry==NULL) o si verifica un errore (entry==NULL && errno) esci dal ciclo
+		if(!entry){ 
+			if(errno)
+				perror("Errore lettura directory");
+			break; 
+		}
+		//Valuta solo le entry delle directory che corrispondono a processi ovvero quelle che hanno come nome un numero [il pid del processo]
 		if(entry->d_type == DT_DIR && isNumber(entry->d_name)){
 			info* process_info = getProcessInfo(entry->d_name);
 			if(!process_info){
-				fprintf(stderr, "Errore Lettura Info Processo %s.\n", entry->d_name);
-				entry = readdir(dir);		
+				fprintf(stderr, "Errore Lettura Info Processo %s.\n", entry->d_name);	
 				continue;
 			}
 			List_append(lista, process_info);
 		}
-		entry = readdir(dir);
-	}
-	if(!entry && errno){
-			perror("Errore lettura directory");
-			closedir(dir);
-			return lista;
 	}
 	closedir(dir);
 	return lista;

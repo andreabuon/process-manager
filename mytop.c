@@ -1,10 +1,7 @@
 #include <gtk/gtk.h>
-
 #include "process.h"
 #include "list.h"
 #include "handlers.h"
-
-#define DEBUG 1
 
 #define APP_NAME "andrea.top"
 
@@ -12,13 +9,18 @@ GtkTreeView *treeview; //sistemare
 GtkListStore *liststore; //sistemare
 
 void caricaProcessi(GtkListStore *liststore){
-	GtkTreeIter iter;
 	List* processList = getProcessesList();
+	if(!processList){
+		fprintf(stderr, "Errore caricamento lista processi");
+		liststore = NULL;
+		return;
+	}
 
 	ListItem* entry = processList->first;
-	while(entry){		
-		gtk_list_store_append(liststore, &iter);
+	while(entry){
+		GtkTreeIter iter;
 		info* process = entry->data;
+		gtk_list_store_append(liststore, &iter);
 		gtk_list_store_set(liststore, &iter, 0, process->command, 1, process->pid, 2, process->state, 3, process->memory, -1); //sistemare
 		entry = entry->next;
 	}
@@ -26,10 +28,10 @@ void caricaProcessi(GtkListStore *liststore){
 }
 
 void aggiornaLista(){
-	gtk_tree_view_set_model(treeview, NULL);
-	gtk_list_store_clear(liststore);
+	gtk_tree_view_set_model(treeview, NULL); //rimuove il modello corrente
+	gtk_list_store_clear(liststore); //elimina tutte le righe dal modello corrente
 	caricaProcessi(liststore);
-	gtk_tree_view_set_model(treeview, (GtkTreeModel*) liststore);
+	gtk_tree_view_set_model(treeview, (GtkTreeModel*) liststore); //imposta il modello aggiornato
 }
 
 pid_t getSelectedProcessPID(){
@@ -39,7 +41,7 @@ pid_t getSelectedProcessPID(){
 	gtk_tree_selection_get_selected(treeSelection, NULL, &iter);
 	gtk_tree_model_get((GtkTreeModel*) liststore, &iter, 1, &pid, -1);
 	
-	#if DEBUG
+	#ifdef DEBUG
 		printf("Selected process %d.\n", pid);
 	#endif
 

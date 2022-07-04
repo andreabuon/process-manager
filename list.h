@@ -27,8 +27,8 @@ List* List_new();
 //Imposta a NULL e a 0 i campi della lista in input.
 void List_init(List* list);
 
-//Aggiunge alla fine della Lista list un nuovo ListItem che contiene i dati val. Restituisce -1 in caso di errore.
-int List_append(List* list, info* val);
+//Aggiunge alla fine della Lista list un nuovo ListItem che contiene i dati val. Restituisce puntatore a ListItem o NULL in caso di errore.
+ListItem* List_append(List* list, info* val);
 
 //Dealloca la Lista list e tutti i suoi ListItem.
 void List_free(List* list);

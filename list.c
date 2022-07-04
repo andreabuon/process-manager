@@ -37,9 +37,9 @@ void List_init(List* lista){
 	lista->size = 0;
 }
 
-int List_append(List* lista, info* val){
+ListItem* List_append(List* lista, info* val){
 	ListItem* elem = ListItem_new(val);
-	if(!elem) return -1;
+	if(!elem) return NULL;
 	if(!lista->first){
 		lista->first = elem;
 	}
@@ -48,7 +48,7 @@ int List_append(List* lista, info* val){
 	}
 	lista->last = elem;
 	lista->size++;
-	return 0;
+	return elem;
 }
 
 void List_free(List* lista){

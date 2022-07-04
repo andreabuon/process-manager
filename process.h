@@ -6,10 +6,10 @@ typedef struct info{
 	pid_t pid;
 	char* command;
 	char state[2];
-	long unsigned int memory;
+	long unsigned int memory; //sistemare
 } info;
 
-//Alloca una nuova struttura info e ne restituisce il puntatore
+//Alloca una nuova struttura info e ne restituisce il puntatore. In caso di errore ritorna NULL.
 info* info_new();
 
 //Dealloca la struttura info puntata dal puntatore in input
@@ -21,5 +21,5 @@ void info_print(const info* process_info);
 //Crea una nuova struttura info con le informazioni relative al processo (il cui pid è passato in input) e ne ritorna il puntatore. Ritorna NULL in caso di errore.
 info* getProcessInfo(const char* pid);
 
-//Crea lista processi in esecuzione.
+//Crea e ritorna lista di processi in esecuzione. In caso di errore ritorna NULL.
 List* getProcessesList();
