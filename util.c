@@ -26,8 +26,6 @@ char* cuncatenateStrings(const char *string0, const char *string1, const char *s
 		return NULL;
 	}
 
-	strncpy(res, string0, len0);
-	strncat(res, string1, len1);
-	strncat(res, string2, len2);
+	snprintf(res, lenght, "%s%s%s", string0, string1, string2);
 	return res;
 }
