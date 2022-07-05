@@ -55,7 +55,7 @@ info* getProcessInfo(const char *pid){
 	per altro leggere 'man 5 proc'
 	*/
 	int ret = fscanf(file,
-					"%d (%m[^)]) %1s %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*d %*d %*d %*u %lu",
+					"%d (%m[^)]) %1s %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*d %*d %*d %*u %*u %ld",
 					&(process_info->pid),
 					&(process_info->command),
 					(process_info->state),
