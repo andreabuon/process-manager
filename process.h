@@ -1,5 +1,6 @@
 #pragma once
 #include "list.h"
+#include <sys/types.h>
 
 //Struttura dati che contiene le informazioni che interessano del processo
 typedef struct info{
