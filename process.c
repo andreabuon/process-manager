@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <sys/types.h>
+#include <string.h>
 #include <errno.h>
 #include "process.h"
 #include "util.h"
@@ -25,26 +26,19 @@ void info_free(info* process_info){
 	free(process_info);
 }
 
-info* getProcessInfo(const char *pid){
-	char* stat_path = cuncatenateStrings("/proc/", pid, "/stat");
-	if(!stat_path){
-		fprintf(stderr, "Errore Creazione Stringa Path.\n");	
-		return NULL;
-	}
-
-	FILE *file = fopen(stat_path, "r");
+info* getProcessInfo(const char *path){
+	FILE *file = fopen(path, "r");
 	if(!file){
 		perror("Errore apertura file");
-		free(stat_path);
 		return NULL;
 	}
 
 	info* process_info = info_new();
 	if(!process_info){
-		free(stat_path);
 		fclose(file);
 		return NULL;
 	}
+	
 	/*
 	fscanf legge in ordine:
 	%d PID del processo
@@ -61,20 +55,24 @@ info* getProcessInfo(const char *pid){
 					(process_info->state),
 					&(process_info->memory)); //sistemare
 	if(ret==EOF || ret<4){ //sistemare, skippa processo (sd-pam)
-		perror("Errore Fscanf");
+		if(ret == EOF)
+			perror("Errore Fscanf");
 		info_free(process_info);
-		free(stat_path);
 		fclose(file);
 		return NULL;
 	}
 
-	free(stat_path);
 	fclose(file);
 	return process_info;
 }
 
 List* getProcessesList(){
-	DIR *dir = opendir("/proc/");
+	const char* proc_path = "/proc/";
+	const int proc_len = strlen(proc_path);
+	const char* stat_path = "/stat";
+	const int stat_len = strlen(stat_path);
+
+	DIR *dir = opendir(proc_path);
 	if(!dir){
 		perror("Errore apertura directory");
 		return NULL;
@@ -86,25 +84,48 @@ List* getProcessesList(){
 		return NULL;
 	}
 
+	//Ciclo su tutte le entry della directory
 	for(;;){
 		errno = 0;
 		struct dirent *entry = readdir(dir);
-		// Se si raggiunge la fine della directory (entry==NULL) o si verifica un errore (entry==NULL && errno) esci dal ciclo
 		if(!entry){ 
 			if(errno)
 				perror("Errore lettura directory");
 			break; 
 		}
+		
 		//Valuta solo le entry delle directory che corrispondono a processi ovvero quelle che hanno come nome un numero [il pid del processo]
-		if(entry->d_type == DT_DIR && isNumber(entry->d_name)){
-			info* process_info = getProcessInfo(entry->d_name);
-			if(!process_info){
-				fprintf(stderr, "Errore Lettura Info Processo %s.\n", entry->d_name);	
+		if(entry->d_type == DT_DIR){
+			int len = isNumeric(entry->d_name);
+			if(!len) continue;
+
+			int len_tot = proc_len + len + stat_len + 1; //+1 per il null terminator!
+
+			char *path = malloc((len_tot)*sizeof(char)); 
+			if(!path){
+				perror("Errore allocazione stringa path");
+				break;
+			}
+			
+			int ret = snprintf(path, len_tot, "%s%s%s", proc_path, entry->d_name, stat_path);
+			if(ret < 0){
+				perror("Errore creazione stringa path processo");
+				free(path);
 				continue;
 			}
+			
+			info* process_info = getProcessInfo(path);
+			if(!process_info){
+				fprintf(stderr, "Errore Lettura Info Processo %s.\n", entry->d_name);	
+				free(path);
+				continue;
+			}
+			
 			List_append(lista, process_info);
+			free(path);
 		}
 	}
+	
 	closedir(dir);
 	return lista;
 }
