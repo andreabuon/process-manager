@@ -6,7 +6,7 @@ typedef struct info{
 	pid_t pid;
 	char* command;
 	char state[2];
-	long int memory; //sistemare; resident memory in pagine (non in byte)
+	int memory; //resident memory in MB		//controllare //sistemare
 } info;
 
 //Alloca una nuova struttura info e ne restituisce il puntatore. In caso di errore ritorna NULL.

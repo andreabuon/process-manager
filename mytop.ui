@@ -66,7 +66,7 @@
   
               <child>
                 <object class="GtkTreeViewColumn">
-                  <property name="title">Memoria Utilizzata</property>
+                  <property name="title">Memoria Utilizzata (in MB)</property>
                   <property name="resizable">True</property>
                   <property name="expand">True</property>
   

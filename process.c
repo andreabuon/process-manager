@@ -18,7 +18,7 @@ info* info_new(){
 }
 
 void info_print(const info* process_info){
-	printf("%d %s %s %lu\n", process_info->pid, process_info->command, process_info->state, process_info->memory);
+	printf("%d %s %s %d\n", process_info->pid, process_info->command, process_info->state, process_info->memory);
 }
 
 void info_free(info* process_info){
@@ -48,12 +48,13 @@ info* getProcessInfo(const char *path){
 	%lu Memoria virtuale del processo
 	per altro leggere 'man 5 proc'
 	*/
+	long int mem;
 	int ret = fscanf(file,
 					"%d (%m[^)]) %1s %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*d %*d %*d %*u %*u %ld",
 					&(process_info->pid),
 					&(process_info->command),
 					(process_info->state),
-					&(process_info->memory)); //sistemare
+					&mem); //sistemare
 	if(ret==EOF || ret<4){ //sistemare, skippa processo (sd-pam)
 		if(ret == EOF)
 			perror("Errore Fscanf");
@@ -61,6 +62,7 @@ info* getProcessInfo(const char *path){
 		fclose(file);
 		return NULL;
 	}
+	process_info->memory = mem >> 8; // converte mem in mb =  numero kilobyte (numero pagine * 4096 -> num pagine << 12) / num kilobyte in un mb (approssimato a 2^20 quindi >> 20) 
 
 	fclose(file);
 	return process_info;
