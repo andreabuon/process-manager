@@ -33,6 +33,7 @@
                   <property name="title">Processo</property>
                   <property name="resizable">True</property>
                   <property name="expand">True</property>
+                  <property name="sort-column-id">0</property>
   
                   <child>
                     <object class="GtkCellRendererText"/>
@@ -48,6 +49,7 @@
                   <property name="title">PID</property>
                   <property name="resizable">True</property>
                   <property name="expand">True</property>
+                  <property name="sort-column-id">1</property>
   
                   <child>
                     <object class="GtkCellRendererText"/>
@@ -63,6 +65,7 @@
                   <property name="title">Stato</property>
                   <property name="resizable">True</property>
                   <property name="expand">True</property>
+                  <property name="sort-column-id">2</property>
   
                   <child>
                     <object class="GtkCellRendererText"/>
@@ -76,9 +79,10 @@
   
               <child>
                 <object class="GtkTreeViewColumn">
-                  <property name="title">Memoria Utilizzata (in MB)</property>
+                  <property name="title">Memoria (in MB)</property>
                   <property name="resizable">True</property>
                   <property name="expand">True</property>
+                  <property name="sort-column-id">3</property>
   
                   <child>
                     <object class="GtkCellRendererText"/>
