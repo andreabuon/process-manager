@@ -6,6 +6,13 @@
 
 #define APP_NAME "andrea.top"
 
+enum{
+	COLUMN_COMMAND,
+	COLUMN_PID,
+	COLUMN_STATE,
+	COLUMN_MEMORY
+};
+
 GtkTreeView *treeview; //sistemare
 GtkListStore *liststore; //sistemare
 
@@ -13,8 +20,7 @@ GtkListStore *liststore; //sistemare
 void caricaProcessi(GtkListStore *liststore){
 	List* processList = getProcessesList();
 	if(!processList){
-		fprintf(stderr, "Errore caricamento lista processi");
-		liststore = NULL;
+		fprintf(stderr, "Errore caricamento lista processi.\n");
 		return;
 	}
 
@@ -23,7 +29,8 @@ void caricaProcessi(GtkListStore *liststore){
 		GtkTreeIter iter;
 		info* process = entry->data;
 		gtk_list_store_append(liststore, &iter);
-		gtk_list_store_set(liststore, &iter, 0, process->command, 1, process->pid, 2, process->state, 3, process->memory, -1); //sistemare
+		gtk_list_store_set(liststore, &iter, COLUMN_COMMAND, process->command, COLUMN_PID, process->pid, COLUMN_STATE, process->state, COLUMN_MEMORY, process->memory, -1); //sistemare
+		
 		entry = entry->next;
 	}
 	List_free(processList);
@@ -58,15 +65,14 @@ pid_t getSelectedProcessPID(){
 }
 
 //Costruisce la finestra e i vari elementi
-static void activate(GtkApplication *app, gpointer user_data)
-{
-	GtkBuilder *builder = gtk_builder_new();
-	gtk_builder_add_from_file(builder, "mytop.ui", NULL);
+static void activate(GtkApplication *app, gpointer user_data){
+	GtkBuilder *builder = gtk_builder_new_from_file("mytop.ui");
 
 	GObject *window = gtk_builder_get_object(builder, "window");
 	gtk_window_set_application(GTK_WINDOW(window), app);
 	
 	treeview = (GtkTreeView*) gtk_builder_get_object(builder, "treeview");
+	
 	liststore = gtk_list_store_new(4, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING, G_TYPE_INT);
 	
 	GObject *btn_kill = gtk_builder_get_object(builder, "btn_kill");
@@ -87,15 +93,13 @@ static void activate(GtkApplication *app, gpointer user_data)
 	g_object_unref(builder);
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]){
 	GtkApplication *app = gtk_application_new(APP_NAME, G_APPLICATION_FLAGS_NONE);
 	g_signal_connect(app, "activate", G_CALLBACK(activate), NULL);
 	
-	//printf("Dimensione Pagina = %d\n", getpagesize());
-
 	int status = g_application_run(G_APPLICATION(app), argc, argv);
 
+	g_object_unref(liststore);
 	g_object_unref(app);
 
 	return status;
