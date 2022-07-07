@@ -6,6 +6,16 @@
     <property name="default-height">600</property>
     <property name="default-width">600</property>
     
+    <child type="titlebar">
+      <object class="GtkHeaderBar">
+        <child>
+          <object class="GtkButton" id="btn_refresh">
+            <property name="label">↻ Refresh</property>
+          </object>
+        </child>
+      </object>
+    </child>
+
     <child>
       <object class="GtkBox">
         <property name="orientation">vertical</property>
@@ -99,34 +109,27 @@
             <property name="margin-bottom">5</property>
             <child>
               <object class="GtkButton" id="btn_kill">
-                <property name="label">Kill</property>
+                <property name="label">✖ Kill</property>
               </object>
             </child>
 
             <child>
               <object class="GtkButton" id="btn_terminate">
-                <property name="label">Terminate</property>
+                <property name="label">⏹ Terminate</property>
               </object>
             </child>
 
             <child>
               <object class="GtkButton" id="btn_suspend">
-                <property name="label">Suspend</property>
+                <property name="label">⏸ Suspend</property>
               </object>
             </child>
 
             <child>
               <object class="GtkButton" id="btn_resume">
-                <property name="label">Resume</property>
+                <property name="label">▶ Resume</property>
               </object>
             </child>
-
-            <child>
-              <object class="GtkButton" id="btn_refresh">
-                <property name="label">Refresh</property>
-              </object>
-            </child>
-          
 
           </object>
         </child>
