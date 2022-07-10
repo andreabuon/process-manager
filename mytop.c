@@ -13,8 +13,8 @@ enum{
 	COLUMN_MEMORY
 };
 
-GtkTreeView *treeview; //sistemare
-GtkListStore *liststore; //sistemare
+GtkTreeView *treeview; //FIXME
+GtkListStore *liststore; //FIXME
 
 //Ottiene la lista dei processi in esecuzione e li carica nella GtkListStore in input
 void caricaProcessi(GtkListStore *liststore){
@@ -29,7 +29,7 @@ void caricaProcessi(GtkListStore *liststore){
 		GtkTreeIter iter;
 		info* process = entry->data;
 		gtk_list_store_append(liststore, &iter);
-		gtk_list_store_set(liststore, &iter, COLUMN_COMMAND, process->command, COLUMN_PID, process->pid, COLUMN_STATE, process->state, COLUMN_MEMORY, process->memory, -1); //sistemare
+		gtk_list_store_set(liststore, &iter, COLUMN_COMMAND, process->command, COLUMN_PID, process->pid, COLUMN_STATE, process->state, COLUMN_MEMORY, process->memory, -1); //FIXME
 		
 		entry = entry->next;
 	}

@@ -54,8 +54,8 @@ info* getProcessInfo(const char *path){
 					&(process_info->pid),
 					&(process_info->command),
 					(process_info->state),
-					&mem); //sistemare
-	if(ret==EOF || ret<4){ //sistemare, skippa processo (sd-pam)
+					&mem); //TODO sistemare
+	if(ret==EOF || ret<4){ //FIXME, skippa processo (sd-pam)
 		if(ret == EOF)
 			perror("Errore Fscanf");
 		info_free(process_info);

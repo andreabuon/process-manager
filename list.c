@@ -3,7 +3,7 @@
 #include "list.h"
 
 //forward declaration
-extern void info_free(); //sistemare
+extern void info_free(); //TODO togliere
 
 ListItem* ListItem_new(info* val){
 	ListItem* elem = malloc(sizeof(ListItem));
@@ -17,7 +17,7 @@ ListItem* ListItem_new(info* val){
 }
 
 void ListItem_free(ListItem* elem){
-	info_free(elem->data); //sistemare
+	info_free(elem->data); //TODO togliere
 	free(elem);
 }
 
