@@ -2,7 +2,7 @@ FLAGS=-Wall -g -DDEBUG
 
 all: mytop
 
-mytop: mytop.o process.o handlers.o util.o list.o
+mytop: mytop.o process.o handlers.o util.o
 	gcc $(FLAGS) -o mytop *.o `pkg-config --libs gtk4`
 
 mytop.o: mytop.c
@@ -16,9 +16,6 @@ process.o: process.c process.h
 
 util.o: util.c util.h
 	gcc $(FLAGS) -c util.c 
-
-list.o: list.c list.h
-	gcc $(FLAGS) -c list.c
 
 clean:
 	rm mytop *.o

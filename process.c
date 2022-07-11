@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <string.h>
 #include <errno.h>
+
 #include "process.h"
 #include "util.h"
 
@@ -104,9 +105,9 @@ int filter(const struct dirent* dir){
 	return dir->d_type == DT_DIR && isNumeric(dir->d_name);
 }
 
-List* getProcessesList(){
+info** getProcessesList(int* len){
 	int proc_fd;
-	proc_fd = open("/proc/", O_DIRECTORY);
+	proc_fd = open("/proc/", O_RDONLY | O_DIRECTORY);
 	if(proc_fd == -1){
 		perror("Errore open /proc/");
 		return NULL;
@@ -124,9 +125,9 @@ List* getProcessesList(){
 		printf("Trovati %d processi.\n", procs_n);
 	#endif
 
-	//TODO Sostituire lista con array
-	List* lista = List_new();
-	if(!lista){
+	info** processes = malloc(procs_n * sizeof(info*));
+	if(!processes){
+		perror("Errore allocazione array");
 		for(int i = 0 ; i<procs_n; i++){
 			free(results[i]);
 		}
@@ -136,22 +137,21 @@ List* getProcessesList(){
 	}
 
 	for(int i = 0; i<procs_n; i++){
-		int pid_fd = openat(proc_fd, results[i]->d_name, O_DIRECTORY);
+		int pid_fd = openat(proc_fd, results[i]->d_name, O_RDONLY | O_DIRECTORY);
 		if(pid_fd == -1){
 			perror("Errore openat");
 			continue;
 		}
 		
-		info* proc = getProcessInfo(pid_fd);
-		if(proc) 
-			List_append(lista, proc);
+		info* proc = getProcessInfo(pid_fd); //proc può anche essere NULL
+		processes[i] = proc;
 		
 		close(pid_fd);
-		
 		free(results[i]);
 	}
 	
 	close(proc_fd);
 	free(results);
-	return lista;
+	*len = procs_n;
+	return processes;
 }

@@ -1,8 +1,6 @@
 #include <gtk/gtk.h>
 #include "process.h"
-#include "list.h"
 #include "handlers.h"
-//#include <unistd.h>
 
 #define APP_NAME "andrea.top"
 #define UI_FILE "mytop.ui"
@@ -17,35 +15,35 @@ enum columns_names{
 GtkTreeView *treeview = NULL; //FIXME
 GtkListStore *liststore = NULL; //FIXME
 
-//Ottiene la lista dei processi in esecuzione e li carica nella GtkListStore in input
-void caricaProcessi(GtkListStore *liststore){
-	List* processList = getProcessesList();
+//Ottiene la lista dei processi in esecuzione e li inserisce nella GtkListStore in input
+void loadProcesses(GtkListStore *liststore){
+	int size;
+	info** processList = getProcessesList(&size);
 	if(!processList){
 		fprintf(stderr, "Errore caricamento lista processi.\n");
 		return;
 	}
 
-	ListItem* entry = processList->first;
-	while(entry){
-		info* process = entry->data;
-		
+	for(int i=0; i<size; i++){
+		info* process = processList[i];
+		if(!process) continue;
+
 		GtkTreeIter iter;
 		gtk_list_store_append(liststore, &iter);
-		gtk_list_store_set(liststore, &iter, COLUMN_COMMAND, process->command, COLUMN_PID, process->pid, COLUMN_STATE, process->state, COLUMN_MEMORY, process->memory, -1); //FIXME
+		gtk_list_store_set(liststore, &iter, COLUMN_COMMAND, process->command, COLUMN_PID, process->pid, COLUMN_STATE, process->state, COLUMN_MEMORY, process->memory, -1);
 		
-		entry = entry->next;
+		info_free(process);
 	}
-	
-	List_free(processList);
+	free(processList);
 }
 
-//Aggiorna TreeView 
-void aggiornaLista(){
+//Aggiorna i dati nella TreeView 
+void updateTreeView(){
 	if(!treeview) return;
 	if(!liststore) return;
 	gtk_tree_view_set_model(treeview, NULL); //rimuove il modello corrente
 	gtk_list_store_clear(liststore); //elimina tutte le righe dal modello corrente
-	caricaProcessi(liststore);
+	loadProcesses(liststore);
 	gtk_tree_view_set_model(treeview, (GtkTreeModel*) liststore); //imposta il modello aggiornato
 }
 
@@ -89,9 +87,9 @@ static void activate(GtkApplication *app, gpointer user_data){
 	GObject *btn_resume = gtk_builder_get_object(builder, "btn_resume");
 	g_signal_connect(btn_resume, "clicked", G_CALLBACK(resumeProcess), NULL);
 	GObject *btn_refresh = gtk_builder_get_object(builder, "btn_refresh");
-	g_signal_connect(btn_refresh, "clicked", G_CALLBACK(aggiornaLista), NULL);
+	g_signal_connect(btn_refresh, "clicked", G_CALLBACK(updateTreeView), NULL);
 
-	aggiornaLista();
+	updateTreeView();
 
 	gtk_widget_show(GTK_WIDGET(window));
 

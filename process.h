@@ -1,5 +1,4 @@
 #pragma once
-#include "list.h"
 #include <sys/types.h>
 
 #define STATE_LEN 2
@@ -9,7 +8,7 @@ typedef struct info{
 	pid_t pid;
 	char* command;
 	char state[STATE_LEN];
-	long memory; //resident memory in MB
+	long memory; //resident memory [MB]
 } info;
 
 //Alloca una nuova struttura info e ne restituisce il puntatore. In caso di errore ritorna NULL.
@@ -28,5 +27,5 @@ void info_print(const info* process_info);
 //Le informazioni vengono estratte dal file stat contenuto nella directory passata come argomento.
 info* getProcessInfo(const int dir_fd);
 
-//Crea e ritorna lista di processi in esecuzione. In caso di errore ritorna NULL.
-List* getProcessesList();
+//Crea e ritorna array di info sui processi in esecuzione. Setta la variabile size in input con la dimensione dell'array. In caso di errore ritorna NULL.
+info** getProcessesList(int* size);

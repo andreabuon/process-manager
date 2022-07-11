@@ -5,7 +5,7 @@
 
 //forward declarations
 extern pid_t getSelectedProcessPID();
-extern void aggiornaLista();
+extern void updateTreeView();
 
 void sendSignal(int signal_n){
 	pid_t pid = getSelectedProcessPID();
@@ -20,7 +20,7 @@ void sendSignal(int signal_n){
 	#ifdef DEBUG
 		printf("Sent signal %d to pid %d.\n", signal_n, pid);
 	#endif
-	aggiornaLista();
+	updateTreeView();
 }
 
 void killProcess(){
