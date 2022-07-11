@@ -28,6 +28,7 @@ void caricaProcessi(GtkListStore *liststore){
 	while(entry){
 		GtkTreeIter iter;
 		info* process = entry->data;
+
 		gtk_list_store_append(liststore, &iter);
 		gtk_list_store_set(liststore, &iter, COLUMN_COMMAND, process->command, COLUMN_PID, process->pid, COLUMN_STATE, process->state, COLUMN_MEMORY, process->memory, -1); //FIXME
 		
