@@ -5,16 +5,17 @@
 //#include <unistd.h>
 
 #define APP_NAME "andrea.top"
+#define UI_FILE "mytop.ui"
 
-enum{
+enum columns_names{
 	COLUMN_COMMAND,
 	COLUMN_PID,
 	COLUMN_STATE,
 	COLUMN_MEMORY
 };
 
-GtkTreeView *treeview; //FIXME
-GtkListStore *liststore; //FIXME
+GtkTreeView *treeview = NULL; //FIXME
+GtkListStore *liststore = NULL; //FIXME
 
 //Ottiene la lista dei processi in esecuzione e li carica nella GtkListStore in input
 void caricaProcessi(GtkListStore *liststore){
@@ -26,19 +27,22 @@ void caricaProcessi(GtkListStore *liststore){
 
 	ListItem* entry = processList->first;
 	while(entry){
-		GtkTreeIter iter;
 		info* process = entry->data;
-
+		
+		GtkTreeIter iter;
 		gtk_list_store_append(liststore, &iter);
 		gtk_list_store_set(liststore, &iter, COLUMN_COMMAND, process->command, COLUMN_PID, process->pid, COLUMN_STATE, process->state, COLUMN_MEMORY, process->memory, -1); //FIXME
 		
 		entry = entry->next;
 	}
+	
 	List_free(processList);
 }
 
 //Aggiorna TreeView 
 void aggiornaLista(){
+	if(!treeview) return;
+	if(!liststore) return;
 	gtk_tree_view_set_model(treeview, NULL); //rimuove il modello corrente
 	gtk_list_store_clear(liststore); //elimina tutte le righe dal modello corrente
 	caricaProcessi(liststore);
@@ -67,14 +71,14 @@ pid_t getSelectedProcessPID(){
 
 //Costruisce la finestra e i vari elementi
 static void activate(GtkApplication *app, gpointer user_data){
-	GtkBuilder *builder = gtk_builder_new_from_file("mytop.ui");
+	GtkBuilder *builder = gtk_builder_new_from_file(UI_FILE);
 
 	GObject *window = gtk_builder_get_object(builder, "window");
 	gtk_window_set_application(GTK_WINDOW(window), app);
 	
 	treeview = (GtkTreeView*) gtk_builder_get_object(builder, "treeview");
 	
-	liststore = gtk_list_store_new(4, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING, G_TYPE_INT);
+	liststore = gtk_list_store_new(4, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING, G_TYPE_LONG);
 	
 	GObject *btn_kill = gtk_builder_get_object(builder, "btn_kill");
 	g_signal_connect(btn_kill, "clicked", G_CALLBACK(killProcess), NULL);

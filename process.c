@@ -15,16 +15,26 @@ info* info_new(){
 		perror("Errore allocazione Info");
 		return NULL;
 	}
+	process_info->command = NULL;
 	return process_info;
 }
 
-void info_print(const info* process_info){
-	printf("%d %s %s %d\n", process_info->pid, process_info->command, process_info->state, process_info->memory);
+void info_free(info* process_info){
+	if(process_info->command)
+		free(process_info->command);
+	free(process_info);
 }
 
-void info_free(info* process_info){
-	free(process_info->command);
-	free(process_info);
+void info_set(info* info, pid_t pid, char* comm, char* state, int mem){
+	//if(!info) return;
+	info->pid = pid;
+	info->command = comm;
+	strncpy(info->state, state, STATE_LEN);
+	info->memory = mem;
+}
+
+void info_print(const info* process_info){
+	printf("%d %s %s %ld\n", process_info->pid, process_info->command, process_info->state, process_info->memory);
 }
 
 info* getProcessInfo(const int dir_fd){
@@ -41,33 +51,36 @@ info* getProcessInfo(const int dir_fd){
 		return NULL;
 	}
 
-	info* process_info = info_new();
-	if(!process_info){
+/*	fscanf legge in ordine:
+	(1) %d pid -> PID del processo
+	(2) (%m[^)]) comm -> Nome dell'eseguibile del processo, togliendo la parentesi tonda iniziale e finale. Alloca automaticamente la memoria necessaria per contenere la stringa e il null terminator. Il null terminator viene aggiunto automaticamente. Supporta anche nomi che contengono spazi (al contrario di %s)
+	(3) %1s state -> Stato del processo. Lo stato è descritto da 1 carattere. Ho usato %s invece di %c in modo da aggiungere automaticamente il null terminator dopo il carattere.
+	(-) %* -> valori ignorati
+	(24) %ld -> Memoria residente del processo
+	per altre info vedere "man 5 proc"
+*/
+	pid_t pid = 0; 
+	char* comm;
+	char state[STATE_LEN];
+	long int mem;
+	int ret = fscanf(file, "%d (%m[^)]) %1s %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*d %*d %*d %*u %*u %ld", &pid, &comm, state, &mem);
+	if(ret==EOF || ret < 4){
+		if(ret == EOF){
+			perror("Errore Fscanf");
+		}
+		printf("Errore lettura processo");
+		if(pid)
+			printf(" pid: %d.", pid);
+		printf("\n");
+		free(comm);
 		fclose(file);
 		close(stat_fd);
 		return NULL;
 	}
 
-/*	fscanf legge in ordine:
- -	(1) %d pid -> PID del processo
- -	(2) (%m[^)]) comm -> Nome dell'eseguibile del processo, togliendo la parentesi tonda iniziale e finale. Alloca automaticamente la memoria necessaria per contenere la stringa e il null terminator. Il null terminator viene aggiunto automaticamente. Supporta anche nomi che contengono spazi (al contrario di %s)
- -	(3) %1s state -> Stato del processo. Lo stato è descritto da 1 carattere. Ho usato %s invece di %c in modo da aggiungere automaticamente il null terminator dopo il carattere.
- -	- %* -> valori ignorati
- -	(24) %lu -> Memoria residente del processo
- -	per altre info vedere "man 5 proc"
-*/
-	long int mem;
-	int ret = fscanf(file,
-					"%d (%m[^)]) %1s %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*d %*d %*d %*u %*u %ld",
-					&(process_info->pid),
-					&(process_info->command),
-					(process_info->state),
-					&mem); //TODO sistemare
-	if(ret==EOF || ret < 4){
-		if(ret == EOF)
-			perror("Errore Fscanf");
-		printf("Errore lettura processo");
-		info_free(process_info);
+	info* process_info = info_new();
+	if(!process_info){
+		free(comm);
 		fclose(file);
 		close(stat_fd);
 		return NULL;
@@ -80,7 +93,7 @@ info* getProcessInfo(const int dir_fd){
 	num kilobytes in un MB = 1000 (approssimato a 2^20) 
 	quindi num megabyte =  mem >> 8
 	*/
-	process_info->memory = mem >> 8; 
+	info_set(process_info, pid, comm, state, mem>>8);
 
 	fclose(file);
 	close(stat_fd);
@@ -99,8 +112,8 @@ List* getProcessesList(){
 		return NULL;
 	}
 
-	struct dirent ** results;
-	int procs_n =  scandirat(proc_fd, ".", &results, &filter, NULL);
+	struct dirent** results;
+	int procs_n = scandirat(proc_fd, ".", &results, &filter, NULL);
 	if (procs_n == -1){
         perror("Errore Scandir");
 		close(proc_fd);
@@ -109,9 +122,9 @@ List* getProcessesList(){
 
 	#ifdef DEBUG
 		printf("Trovati %d processi.\n", procs_n);
-		fflush(stdout);
 	#endif
 
+	//TODO Sostituire lista con array
 	List* lista = List_new();
 	if(!lista){
 		for(int i = 0 ; i<procs_n; i++){
@@ -125,16 +138,19 @@ List* getProcessesList(){
 	for(int i = 0; i<procs_n; i++){
 		int pid_fd = openat(proc_fd, results[i]->d_name, O_DIRECTORY);
 		if(pid_fd == -1){
-			perror("Errore Openat");
+			perror("Errore openat");
 			continue;
 		}
+		
 		info* proc = getProcessInfo(pid_fd);
 		if(proc) 
 			List_append(lista, proc);
 		
 		close(pid_fd);
+		
 		free(results[i]);
 	}
+	
 	close(proc_fd);
 	free(results);
 	return lista;

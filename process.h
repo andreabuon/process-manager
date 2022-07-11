@@ -2,12 +2,14 @@
 #include "list.h"
 #include <sys/types.h>
 
+#define STATE_LEN 2
+
 //Struttura dati che contiene le informazioni che interessano del processo
 typedef struct info{
 	pid_t pid;
 	char* command;
-	char state[2];
-	int memory; //resident memory in MB		//TODO controllare
+	char state[STATE_LEN];
+	long memory; //resident memory in MB
 } info;
 
 //Alloca una nuova struttura info e ne restituisce il puntatore. In caso di errore ritorna NULL.
@@ -15,6 +17,9 @@ info* info_new();
 
 //Dealloca la struttura info puntata dal puntatore in input
 void info_free(info* process_info);
+
+//Imposta i campi della struttura info
+void info_set(info* info, pid_t pid, char* comm, char* state, int mem);
 
 //Stampa su console i dati del processo salvati nella struttura info in input
 void info_print(const info* process_info);
