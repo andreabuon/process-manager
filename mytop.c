@@ -15,7 +15,6 @@ enum columns_names{
 };
 
 GtkTreeView *treeview = NULL; //FIXME
-GtkListStore *liststore = NULL; //FIXME
 
 //Ottiene la lista dei processi in esecuzione e li inserisce nella GtkListStore in input
 void loadProcesses(GtkListStore *liststore){
@@ -42,25 +41,30 @@ void loadProcesses(GtkListStore *liststore){
 //Aggiorna i dati nella TreeView 
 void updateTreeView(){
 	if(!treeview) return;
-	if(!liststore) return;
+	GtkListStore* old = (GtkListStore*) gtk_tree_view_get_model(treeview);
 	gtk_tree_view_set_model(treeview, NULL); //rimuove il modello corrente
-	gtk_list_store_clear(liststore); //elimina tutte le righe dal modello corrente
+	gtk_list_store_clear(old); //elimina tutte le righe dal modello corrente
+	if(old)
+		g_object_unref(old);
+	
+	GtkListStore* liststore = gtk_list_store_new(COLS_NUM, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING, G_TYPE_LONG, G_TYPE_UINT);
 	loadProcesses(liststore);
 	gtk_tree_view_set_model(treeview, (GtkTreeModel*) liststore); //imposta il modello aggiornato
 }
 
-//Ritorna il pid_t del processo selezionato nella ListView. Ritorna -1 se nessuna riga è stata selezionata.
+//Ritorna il pid del processo selezionato nella TreeView. Ritorna -1 se nessuna riga è stata selezionata.
 pid_t getSelectedProcessPID(){
 	GtkTreeSelection* treeSelection = gtk_tree_view_get_selection(treeview);
+	GtkTreeModel* model;
 	GtkTreeIter iter;
-	gboolean res = gtk_tree_selection_get_selected(treeSelection, NULL, &iter);
+	gboolean res = gtk_tree_selection_get_selected(treeSelection, &model, &iter);
 	if(!res){
 		fprintf(stderr, "getSelectedProcessPID: Nessuna riga selezionata.\n");
 		return -1;
 	}
 
 	pid_t pid;
-	gtk_tree_model_get((GtkTreeModel*) liststore, &iter, COLUMN_PID, &pid, -1);
+	gtk_tree_model_get(model, &iter, COLUMN_PID, &pid, -1);
 	
 	#ifdef DEBUG
 		printf("Selezionato processo %d.\n", pid);
@@ -76,8 +80,6 @@ static void activate(GtkApplication *app, gpointer user_data){
 	gtk_window_set_application(GTK_WINDOW(window), app);
 	
 	treeview = (GtkTreeView*) gtk_builder_get_object(builder, "treeview");
-	
-	liststore = gtk_list_store_new(COLS_NUM, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING, G_TYPE_LONG, G_TYPE_UINT);
 	
 	GObject *btn_kill = gtk_builder_get_object(builder, "btn_kill");
 	g_signal_connect(btn_kill, "clicked", G_CALLBACK(killProcess), NULL);
@@ -103,7 +105,6 @@ int main(int argc, char *argv[]){
 	
 	int status = g_application_run(G_APPLICATION(app), argc, argv);
 
-	g_object_unref(liststore);
 	g_object_unref(app);
 
 	return status;
