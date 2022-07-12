@@ -14,7 +14,7 @@ void sendSignal(int signal_n){
 	}
 	int ret = kill(pid, signal_n);
 	if(ret){
-		perror("Errore invio segnale");
+		perror("sendSignal: Errore invio segnale");
 		return;
 	}
 	#ifdef DEBUG

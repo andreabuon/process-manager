@@ -47,7 +47,6 @@
               <child>
                 <object class="GtkTreeViewColumn">
                   <property name="title">PID</property>
-                  <property name="resizable">True</property>
                   <property name="expand">True</property>
                   <property name="sort-column-id">1</property>
   
@@ -63,10 +62,8 @@
               <child>
                 <object class="GtkTreeViewColumn">
                   <property name="title">Stato</property>
-                  <property name="resizable">True</property>
                   <property name="expand">True</property>
                   <property name="sort-column-id">2</property>
-  
                   <child>
                     <object class="GtkCellRendererText"/>
                     <attributes>
@@ -79,8 +76,8 @@
   
               <child>
                 <object class="GtkTreeViewColumn">
-                  <property name="title">Memoria (in MB)</property>
-                  <property name="resizable">True</property>
+                  <property name="title">Flags</property>
+                  <property name="visible">False</property>
                   <property name="expand">True</property>
                   <property name="sort-column-id">3</property>
   
@@ -88,6 +85,23 @@
                     <object class="GtkCellRendererText"/>
                     <attributes>
                       <attribute name="text">3</attribute>
+                    </attributes>
+                  </child>
+  
+                </object>
+              </child>
+
+
+              <child>
+                <object class="GtkTreeViewColumn">
+                  <property name="title">Memoria (in MB)</property>
+                  <property name="expand">True</property>
+                  <property name="sort-column-id">4</property>
+  
+                  <child>
+                    <object class="GtkCellRendererText"/>
+                    <attributes>
+                      <attribute name="text">4</attribute>
                     </attributes>
                   </child>
   

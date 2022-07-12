@@ -9,7 +9,9 @@ enum columns_names{
 	COLUMN_COMMAND,
 	COLUMN_PID,
 	COLUMN_STATE,
-	COLUMN_MEMORY
+	COLUMN_FLAGS,
+	COLUMN_MEMORY,
+	COLS_NUM
 };
 
 GtkTreeView *treeview = NULL; //FIXME
@@ -20,7 +22,7 @@ void loadProcesses(GtkListStore *liststore){
 	int size;
 	info** processList = getProcessesList(&size);
 	if(!processList){
-		fprintf(stderr, "Errore caricamento lista processi.\n");
+		fprintf(stderr, "loadProcesses: Errore caricamento lista processi.\n");
 		return;
 	}
 
@@ -30,7 +32,7 @@ void loadProcesses(GtkListStore *liststore){
 
 		GtkTreeIter iter;
 		gtk_list_store_append(liststore, &iter);
-		gtk_list_store_set(liststore, &iter, COLUMN_COMMAND, process->command, COLUMN_PID, process->pid, COLUMN_STATE, process->state, COLUMN_MEMORY, process->memory, -1);
+		gtk_list_store_set(liststore, &iter, COLUMN_COMMAND, process->command, COLUMN_PID, process->pid, COLUMN_STATE, process->state, COLUMN_FLAGS, process->flags, COLUMN_MEMORY, process->memory, -1);
 		
 		info_free(process);
 	}
@@ -53,17 +55,16 @@ pid_t getSelectedProcessPID(){
 	GtkTreeIter iter;
 	gboolean res = gtk_tree_selection_get_selected(treeSelection, NULL, &iter);
 	if(!res){
-		fprintf(stderr, "Nessuna riga selezionata.\n");
+		fprintf(stderr, "getSelectedProcessPID: Nessuna riga selezionata.\n");
 		return -1;
 	}
 
 	pid_t pid;
-	gtk_tree_model_get((GtkTreeModel*) liststore, &iter, 1, &pid, -1);
+	gtk_tree_model_get((GtkTreeModel*) liststore, &iter, COLUMN_PID, &pid, -1);
 	
 	#ifdef DEBUG
 		printf("Selezionato processo %d.\n", pid);
 	#endif
-
 	return pid;
 }
 
@@ -76,7 +77,7 @@ static void activate(GtkApplication *app, gpointer user_data){
 	
 	treeview = (GtkTreeView*) gtk_builder_get_object(builder, "treeview");
 	
-	liststore = gtk_list_store_new(4, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING, G_TYPE_LONG);
+	liststore = gtk_list_store_new(COLS_NUM, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING, G_TYPE_LONG, G_TYPE_UINT);
 	
 	GObject *btn_kill = gtk_builder_get_object(builder, "btn_kill");
 	g_signal_connect(btn_kill, "clicked", G_CALLBACK(killProcess), NULL);

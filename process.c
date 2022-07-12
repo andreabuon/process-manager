@@ -10,10 +10,12 @@
 #include "process.h"
 #include "util.h"
 
+#define PF_KTHREAD 0x00200000 //Kernel threads Flag from /linux/sched.h
+
 info* info_new(){
 	info* process_info = malloc(sizeof(info));
 	if(!process_info){
-		perror("Errore allocazione Info");
+		perror("info_new: Errore allocazione info");
 		return NULL;
 	}
 	process_info->command = NULL;
@@ -26,11 +28,11 @@ void info_free(info* process_info){
 	free(process_info);
 }
 
-void info_set(info* info, pid_t pid, char* comm, char* state, int mem){
-	//if(!info) return;
+void info_set(info* info, pid_t pid, char* comm, char* state, unsigned flags, int mem){
 	info->pid = pid;
 	info->command = comm;
 	strncpy(info->state, state, STATE_LEN);
+	info->flags = flags;
 	info->memory = mem;
 }
 
@@ -41,13 +43,13 @@ void info_print(const info* process_info){
 info* getProcessInfo(const int dir_fd){
 	int stat_fd = openat(dir_fd, "stat", O_RDONLY);
 	if(stat_fd == -1){
-		perror("Errore openat stat_fd");
+		perror("getProcessInfo: Errore openat stat_fd");
 		return NULL;
 	}
 
 	FILE *file = fdopen(stat_fd, "r");
 	if(!file){
-		perror("Errore fdopen file");
+		perror("getProcessInfo: Errore fdopen file");
 		close(stat_fd);
 		return NULL;
 	}
@@ -56,6 +58,7 @@ info* getProcessInfo(const int dir_fd){
 	(1) %d pid -> PID del processo
 	(2) (%m[^)]) comm -> Nome dell'eseguibile del processo, togliendo la parentesi tonda iniziale e finale. Alloca automaticamente la memoria necessaria per contenere la stringa e il null terminator. Il null terminator viene aggiunto automaticamente. Supporta anche nomi che contengono spazi (al contrario di %s)
 	(3) %1s state -> Stato del processo. Lo stato è descritto da 1 carattere. Ho usato %s invece di %c in modo da aggiungere automaticamente il null terminator dopo il carattere.
+	(9) %u flags
 	(-) %* -> valori ignorati
 	(24) %ld -> Memoria residente del processo
 	per altre info vedere "man 5 proc"
@@ -63,16 +66,25 @@ info* getProcessInfo(const int dir_fd){
 	pid_t pid = 0; 
 	char* comm;
 	char state[STATE_LEN];
+	unsigned flags;
 	long int mem;
-	int ret = fscanf(file, "%d (%m[^)]) %1s %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*d %*d %*d %*u %*u %ld", &pid, &comm, state, &mem);
-	if(ret==EOF || ret < 4){
+	int ret = fscanf(file, "%d (%m[^)]) %1s %*d %*d %*d %*d %*d %u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*d %*d %*d %*u %*u %ld", &pid, &comm, state, &flags, &mem);
+	if(ret==EOF || ret < 5){
 		if(ret == EOF){
-			perror("Errore Fscanf");
+			perror("getProcessInfo: Errore Fscanf");
 		}
-		printf("Errore lettura processo");
+		printf("getProcessInfo: Errore Lettura info del Processo");
 		if(pid)
 			printf(" pid: %d.", pid);
 		printf("\n");
+		free(comm);
+		fclose(file);
+		close(stat_fd);
+		return NULL;
+	}
+
+	//ignora kernel threads //TODO //FIXME //HACK
+	if(flags & PF_KTHREAD){
 		free(comm);
 		fclose(file);
 		close(stat_fd);
@@ -94,7 +106,7 @@ info* getProcessInfo(const int dir_fd){
 	num kilobytes in un MB = 1000 (approssimato a 2^20) 
 	quindi num megabyte =  mem >> 8
 	*/
-	info_set(process_info, pid, comm, state, mem>>8);
+	info_set(process_info, pid, comm, state, flags, mem>>8);
 
 	fclose(file);
 	close(stat_fd);
@@ -102,6 +114,7 @@ info* getProcessInfo(const int dir_fd){
 }
 
 int filter(const struct dirent* dir){
+	//Seleziona solo le directory che hanno un PID come nome.
 	return dir->d_type == DT_DIR && isNumeric(dir->d_name);
 }
 
@@ -109,25 +122,26 @@ info** getProcessesList(int* len){
 	int proc_fd;
 	proc_fd = open("/proc/", O_RDONLY | O_DIRECTORY);
 	if(proc_fd == -1){
-		perror("Errore open /proc/");
+		perror("GetProcessesList: Errore apertura /proc/");
 		return NULL;
 	}
 
 	struct dirent** results;
 	int procs_n = scandirat(proc_fd, ".", &results, &filter, NULL);
 	if (procs_n == -1){
-        perror("Errore Scandir");
+        perror("GetProcessesList: Errore Scandir");
 		close(proc_fd);
 		return NULL;
 	}
 
 	#ifdef DEBUG
-		printf("Trovati %d processi.\n", procs_n);
+		//printf("Trovati %d processi.\n", procs_n);
 	#endif
 
 	info** processes = malloc(procs_n * sizeof(info*));
 	if(!processes){
-		perror("Errore allocazione array");
+		perror("GetProcessesList: Errore allocazione array processi");
+		
 		for(int i = 0 ; i<procs_n; i++){
 			free(results[i]);
 		}
@@ -139,11 +153,13 @@ info** getProcessesList(int* len){
 	for(int i = 0; i<procs_n; i++){
 		int pid_fd = openat(proc_fd, results[i]->d_name, O_RDONLY | O_DIRECTORY);
 		if(pid_fd == -1){
-			perror("Errore openat");
+			fprintf(stderr, "GetProcessesList: Errore Openat per il processo %d: %s\n", i, strerror(errno));
+			processes[i] = NULL;
 			continue;
 		}
 		
-		info* proc = getProcessInfo(pid_fd); //proc può anche essere NULL
+		info* proc = getProcessInfo(pid_fd); 
+		//NOTE proc può anche essere NULL
 		processes[i] = proc;
 		
 		close(pid_fd);
