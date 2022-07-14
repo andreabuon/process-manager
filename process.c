@@ -1,3 +1,5 @@
+#define _GNU_SOURCE 
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -28,16 +30,17 @@ void info_free(info* process_info){
 	free(process_info);
 }
 
-void info_set(info* info, pid_t pid, char* comm, char* state, unsigned flags, int mem){
+void info_set(info* info, pid_t pid, char* comm, char* state, unsigned flags, int cpu, long mem){
 	info->pid = pid;
 	info->command = comm;
 	strncpy(info->state, state, STATE_LEN);
 	info->flags = flags;
+	info->cpu_usage = cpu;
 	info->memory = mem;
 }
 
 void info_print(const info* process_info){
-	printf("%d %s %s %ld\n", process_info->pid, process_info->command, process_info->state, process_info->memory);
+	printf("%d %s %s %d %ld\n", process_info->pid, process_info->command, process_info->state, process_info->cpu_usage, process_info->memory);
 }
 
 info* getProcessInfo(const int dir_fd){
@@ -67,7 +70,9 @@ info* getProcessInfo(const int dir_fd){
 	char* comm;
 	char state[STATE_LEN];
 	unsigned flags;
-	long int mem;
+	int cpu_usage = 123454321; //TODO placeholder
+	long mem;
+
 	int ret = fscanf(file, "%d (%m[^)]) %1s %*d %*d %*d %*d %*d %u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*d %*d %*d %*u %*u %ld", &pid, &comm, state, &flags, &mem);
 	if(ret==EOF || ret < 5){
 		if(ret == EOF){
@@ -106,7 +111,7 @@ info* getProcessInfo(const int dir_fd){
 	num kilobytes in un MB = 1000 (approssimato a 2^20) 
 	quindi num megabyte =  mem >> 8
 	*/
-	info_set(process_info, pid, comm, state, flags, mem>>8);
+	info_set(process_info, pid, comm, state, flags, cpu_usage, mem>>8);
 
 	fclose(file);
 	close(stat_fd);
@@ -114,7 +119,7 @@ info* getProcessInfo(const int dir_fd){
 }
 
 int filter(const struct dirent* dir){
-	//Seleziona solo le directory che hanno un PID come nome.
+	//Seleziona solo le directory che hanno come nome un PID.
 	return dir->d_type == DT_DIR && isNumeric(dir->d_name);
 }
 
@@ -135,7 +140,7 @@ info** getProcessesList(int* len){
 	}
 
 	#ifdef DEBUG
-		//printf("Trovati %d processi.\n", procs_n);
+		printf("Trovati %d processi.\n", procs_n);
 	#endif
 
 	info** processes = malloc(procs_n * sizeof(info*));
@@ -159,7 +164,7 @@ info** getProcessesList(int* len){
 		}
 		
 		info* proc = getProcessInfo(pid_fd); 
-		//NOTE proc può anche essere NULL
+		//NOTE in caso di errore proc vale NULL
 		processes[i] = proc;
 		
 		close(pid_fd);

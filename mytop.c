@@ -10,6 +10,7 @@ enum columns_names{
 	COLUMN_PID,
 	COLUMN_STATE,
 	COLUMN_FLAGS,
+	COLUMN_CPU,
 	COLUMN_MEMORY,
 	COLS_NUM
 };
@@ -31,7 +32,7 @@ void loadProcesses(GtkListStore *liststore){
 
 		GtkTreeIter iter;
 		gtk_list_store_append(liststore, &iter);
-		gtk_list_store_set(liststore, &iter, COLUMN_COMMAND, process->command, COLUMN_PID, process->pid, COLUMN_STATE, process->state, COLUMN_FLAGS, process->flags, COLUMN_MEMORY, process->memory, -1);
+		gtk_list_store_set(liststore, &iter, COLUMN_COMMAND, process->command, COLUMN_PID, process->pid, COLUMN_STATE, process->state, COLUMN_FLAGS, process->flags, COLUMN_CPU, process->cpu_usage, COLUMN_MEMORY, process->memory, -1);
 		
 		info_free(process);
 	}
@@ -43,11 +44,12 @@ void updateTreeView(){
 	if(!treeview) return;
 	GtkListStore* old = (GtkListStore*) gtk_tree_view_get_model(treeview);
 	gtk_tree_view_set_model(treeview, NULL); //rimuove il modello corrente
-	gtk_list_store_clear(old); //elimina tutte le righe dal modello corrente
-	if(old)
+	if(old){
+		gtk_list_store_clear(old); //elimina tutte le righe dal modello corrente
 		g_object_unref(old);
+	}
 	
-	GtkListStore* liststore = gtk_list_store_new(COLS_NUM, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING, G_TYPE_LONG, G_TYPE_UINT);
+	GtkListStore* liststore = gtk_list_store_new(COLS_NUM, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING, G_TYPE_LONG, G_TYPE_INT, G_TYPE_UINT);
 	loadProcesses(liststore);
 	gtk_tree_view_set_model(treeview, (GtkTreeModel*) liststore); //imposta il modello aggiornato
 }
