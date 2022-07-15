@@ -57,30 +57,38 @@ info* getProcessInfo(const int dir_fd){
 		return NULL;
 	}
 
-/*	fscanf legge in ordine:
-	(1) %d pid -> PID del processo
-	(2) (%m[^)]) comm -> Nome dell'eseguibile del processo, togliendo la parentesi tonda iniziale e finale. Alloca automaticamente la memoria necessaria per contenere la stringa e il null terminator. Il null terminator viene aggiunto automaticamente. Supporta anche nomi che contengono spazi (al contrario di %s)
-	(3) %1s state -> Stato del processo. Lo stato è descritto da 1 carattere. Ho usato %s invece di %c in modo da aggiungere automaticamente il null terminator dopo il carattere.
-	(9) %u flags
-	(-) %* -> valori ignorati
-	(24) %ld -> Memoria residente del processo
-	per altre info vedere "man 5 proc"
-*/
 	pid_t pid = 0; 
 	char* comm;
 	char state[STATE_LEN];
 	unsigned flags;
-	int cpu_usage = 123454321; //TODO placeholder
+	float cpu_usage;
 	long mem;
 
-	int ret = fscanf(file, "%d (%m[^)]) %1s %*d %*d %*d %*d %*d %u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*d %*d %*d %*u %*u %ld", &pid, &comm, state, &flags, &mem);
-	if(ret==EOF || ret < 5){
+	//CALCOLO CPU
+	long unsigned utime, stime;
+	long long unsigned starttime;
+	long ticks = sysconf(_SC_CLK_TCK);
+
+	/*
+	(1) %d pid -> PID del processo
+	(2) (%m[^)]) comm -> Nome dell'eseguibile del processo, togliendo la parentesi tonda iniziale e finale. Alloca automaticamente la memoria necessaria per contenere la stringa e il null terminator. Il null terminator viene aggiunto automaticamente. Supporta anche nomi che contengono spazi (al contrario di %s)
+	(3) %1s state -> Stato del processo. Lo stato è descritto da 1 carattere. Ho usato %s invece di %c in modo da aggiungere automaticamente il null terminator dopo il carattere.
+	(9) %u flags
+	(14) %lu utime
+	(15) %lu stime
+	(22) %llu starttime  
+	(-) %* -> valori ignorati
+	(24) %ld -> memoria residente
+	*/
+	int ret;
+	ret = fscanf(file, "%d (%m[^)]) %1s %*d %*d %*d %*d %*d %u %*u %*u %*u %*u %lu %lu %*d %*d %*d %*d %*d %*d %llu %*u %ld", &pid, &comm, state, &flags, &utime, &stime, &starttime, &mem);
+	if(ret==EOF || ret < 8){
 		if(ret == EOF){
 			perror("getProcessInfo: Errore Fscanf");
 		}
 		printf("getProcessInfo: Errore Lettura info del Processo");
 		if(pid)
-			printf(" pid: %d.", pid);
+			printf(" con pid: %d.", pid);
 		printf("\n");
 		free(comm);
 		fclose(file);
@@ -95,6 +103,19 @@ info* getProcessInfo(const int dir_fd){
 		close(stat_fd);
 		return NULL;
 	}
+
+	//CALCOLO CPU
+	long unsigned uptime;
+	FILE* uptime_file = fopen("/proc/uptime", "r");
+	if(uptime_file){
+		ret = fscanf(uptime_file, "%lu", &uptime);
+		if(ret == EOF){
+			fprintf(stderr, "getProcessInfo: Errore Scanf Uptime");
+		}
+		fclose(uptime_file);
+		cpu_usage = 100 * ((utime + stime) / ticks ) / uptime;
+	}
+	//fine CPU
 
 	info* process_info = info_new();
 	if(!process_info){
@@ -111,7 +132,7 @@ info* getProcessInfo(const int dir_fd){
 	num kilobytes in un MB = 1000 (approssimato a 2^20) 
 	quindi num megabyte =  mem >> 8
 	*/
-	info_set(process_info, pid, comm, state, flags, cpu_usage, mem>>8);
+	info_set(process_info, pid, comm, state, flags, (int) cpu_usage, mem >> 8);
 
 	fclose(file);
 	close(stat_fd);

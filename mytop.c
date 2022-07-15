@@ -49,7 +49,7 @@ void updateTreeView(){
 		g_object_unref(old);
 	}
 	
-	GtkListStore* liststore = gtk_list_store_new(COLS_NUM, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING, G_TYPE_LONG, G_TYPE_INT, G_TYPE_UINT);
+	GtkListStore* liststore = gtk_list_store_new(COLS_NUM, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING, G_TYPE_LONG, G_TYPE_INT, G_TYPE_LONG);
 	loadProcesses(liststore);
 	gtk_tree_view_set_model(treeview, (GtkTreeModel*) liststore); //imposta il modello aggiornato
 }
