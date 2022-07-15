@@ -1,14 +1,13 @@
-#include <stdio.h>
-#include <signal.h>
 #include <sys/types.h>
+#include <signal.h>
+#include <stdio.h>
 #include "handlers.h"
 
-//forward declarations
-extern pid_t getSelectedProcessPID();
+extern pid_t getSelectedPID();
 extern void updateTreeView();
 
 void sendSignal(int signal_n){
-	pid_t pid = getSelectedProcessPID();
+	pid_t pid = getSelectedPID();
 	if(pid<0){
 		return;
 	}

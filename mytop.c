@@ -18,7 +18,7 @@ enum columns_names{
 GtkTreeView *treeview = NULL; //FIXME
 
 //Ottiene la lista dei processi in esecuzione e inserisce i loro dati nella GtkListStore in input
-void loadProcesses(GtkListStore *liststore){
+void loadProcessesData(GtkListStore *liststore){
 	int size;
 	info** processList = getProcessesList(&size);
 	if(!processList){
@@ -51,12 +51,12 @@ void updateTreeView(){
 	}
 	
 	GtkListStore* liststore = gtk_list_store_new(COLS_NUM, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING, G_TYPE_LONG, G_TYPE_INT, G_TYPE_LONG);
-	loadProcesses(liststore);
+	loadProcessesData(liststore);
 	gtk_tree_view_set_model(treeview, (GtkTreeModel*) liststore); //imposta il nuovo modello aggiornato
 }
 
 //Ritorna il pid del processo selezionato nella TreeView. Ritorna -1 se nessuna riga è stata selezionata.
-pid_t getSelectedProcessPID(){
+pid_t getSelectedPID(){
 	GtkTreeSelection* treeSelection = gtk_tree_view_get_selection(treeview);
 	GtkTreeModel* model;
 	GtkTreeIter iter;
@@ -76,7 +76,7 @@ pid_t getSelectedProcessPID(){
 }
 
 //Costruisce la finestra e i vari elementi
-static void activate(GtkApplication *app, gpointer user_data){
+static void buildWindow(GtkApplication *app, gpointer user_data){
 	GtkBuilder *builder = gtk_builder_new_from_file(UI_FILE);
 
 	GObject *window = gtk_builder_get_object(builder, "window");
@@ -104,7 +104,7 @@ static void activate(GtkApplication *app, gpointer user_data){
 
 int main(int argc, char *argv[]){
 	GtkApplication *app = gtk_application_new(APP_NAME, G_APPLICATION_FLAGS_NONE);
-	g_signal_connect(app, "activate", G_CALLBACK(activate), NULL);
+	g_signal_connect(app, "activate", G_CALLBACK(buildWindow), NULL);
 	
 	int status = g_application_run(G_APPLICATION(app), argc, argv);
 

@@ -1,11 +1,12 @@
 #include <ctype.h>
+#include <stdbool.h>
 #include "util.h"
 
-int isNumeric(const char* string){
+bool isNumeric(const char* string){
 	while(*string){
 		if(!isdigit(*string))
-			return 0;
+			return false;
 		string++;
 	}
-	return 1;
+	return true;
 }
