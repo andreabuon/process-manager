@@ -8,11 +8,11 @@
 #include <sys/types.h>
 #include <string.h>
 #include <errno.h>
-
 #include "process.h"
 #include "util.h"
 
-#define PF_KTHREAD 0x00200000 //Kernel threads Flag from /linux/sched.h
+//Flag Kernel Thread (da "/linux/sched.h")
+#define PF_KTHREAD 0x00200000 
 
 info* info_new(){
 	info* process_info = malloc(sizeof(info));
@@ -44,13 +44,14 @@ void info_print(const info* process_info){
 }
 
 info* getProcessInfo(const int dir_fd){
+	//Apertura file "stat" nella directory dir_fd (in input). dir_fd = /proc/[pid]
 	int stat_fd = openat(dir_fd, "stat", O_RDONLY);
 	if(stat_fd == -1){
 		perror("getProcessInfo: Errore openat stat_fd");
 		return NULL;
 	}
 
-	FILE *file = fdopen(stat_fd, "r");
+	FILE* file = fdopen(stat_fd, "r");
 	if(!file){
 		perror("getProcessInfo: Errore fdopen file");
 		close(stat_fd);
@@ -62,17 +63,17 @@ info* getProcessInfo(const int dir_fd){
 	char state[STATE_LEN];
 	unsigned flags;
 	float cpu_usage;
-	long mem;
+	long mem; //leggi dopo
 
-	//CALCOLO CPU
-	long unsigned utime, stime;
-	long long unsigned starttime;
-	long ticks = sysconf(_SC_CLK_TCK);
+	//variabili necessarie per calcore l'uso della cpu
+	long unsigned utime, stime; //espresso in clock ticks
+	long long unsigned starttime; //espresso in secondi
+	long ticks = sysconf(_SC_CLK_TCK); //numero clock ticks al secondo
 
-	/*
+	/* Parametri SCANF - per altre info consultare "man 5 proc"
 	(1) %d pid -> PID del processo
-	(2) (%m[^)]) comm -> Nome dell'eseguibile del processo, togliendo la parentesi tonda iniziale e finale. Alloca automaticamente la memoria necessaria per contenere la stringa e il null terminator. Il null terminator viene aggiunto automaticamente. Supporta anche nomi che contengono spazi (al contrario di %s)
-	(3) %1s state -> Stato del processo. Lo stato è descritto da 1 carattere. Ho usato %s invece di %c in modo da aggiungere automaticamente il null terminator dopo il carattere.
+	(2) (%m[^)]) comm -> Nome dell'eseguibile del processo, togliendo la parentesi tonda iniziale e finale. Alloca automaticamente la memoria necessaria per contenere la stringa e il null terminator. Il null terminator viene aggiunto automaticamente. Supporta anche nomi che contengono spazi (al contrario di %s) //FIXME errore su processo (sd-pam)
+	(3) %1s state -> Stato del processo. Lo stato è descritto da 1 carattere. Ho usato %s invece di %c in modo da aggiungere automaticamente il null terminator dopo il carattere e poter inserire facilmente il valore nella GUI.
 	(9) %u flags
 	(14) %lu utime
 	(15) %lu stime
@@ -83,117 +84,118 @@ info* getProcessInfo(const int dir_fd){
 	int ret;
 	ret = fscanf(file, "%d (%m[^)]) %1s %*d %*d %*d %*d %*d %u %*u %*u %*u %*u %lu %lu %*d %*d %*d %*d %*d %*d %llu %*u %ld", &pid, &comm, state, &flags, &utime, &stime, &starttime, &mem);
 	if(ret==EOF || ret < 8){
-		if(ret == EOF){
-			perror("getProcessInfo: Errore Fscanf");
-		}
-		printf("getProcessInfo: Errore Lettura info del Processo");
+		if(ret == EOF)
+			perror("getProcessInfo: Errore fscanf");
+		else
+			fprintf(stderr, "getProcessInfo: Errore matching\n");
+		fprintf(stderr, "getProcessInfo: Errore lettura info del processo");
 		if(pid)
-			printf(" con pid: %d.", pid);
-		printf("\n");
+			fprintf(stderr, " [%d]", pid);
+		fprintf(stderr, "\n");
 		free(comm);
 		fclose(file);
 		close(stat_fd);
 		return NULL;
 	}
 
-	//ignora kernel threads //TODO //FIXME //HACK
+	fclose(file);
+	close(stat_fd);
+
+	//Ignora Kernel Threads //TODO //FIXME //HACK
 	if(flags & PF_KTHREAD){
 		free(comm);
-		fclose(file);
-		close(stat_fd);
 		return NULL;
 	}
 
-	//CALCOLO CPU
+	//CALCOLO USO CPU
 	long unsigned uptime;
 	FILE* uptime_file = fopen("/proc/uptime", "r");
 	if(uptime_file){
 		ret = fscanf(uptime_file, "%lu", &uptime);
-		if(ret == EOF){
+		if(ret == EOF)
 			fprintf(stderr, "getProcessInfo: Errore Scanf Uptime");
-		}
+		else
+			cpu_usage = 100 * ((utime + stime) / ticks ) / uptime;
 		fclose(uptime_file);
-		cpu_usage = 100 * ((utime + stime) / ticks ) / uptime;
 	}
 	//fine CPU
 
 	info* process_info = info_new();
 	if(!process_info){
 		free(comm);
-		fclose(file);
-		close(stat_fd);
 		return NULL;
 	}
 
 	/*
-	mem è espresso in numero di pagine
-	per	convertire mem in MB -> numero kilobytes totali / num kilobytes in un MB
-	numero kilobyte = num pagine * 4096 (ovvero num pagine << 12)
-	num kilobytes in un MB = 1000 (approssimato a 2^20) 
-	quindi num megabyte =  mem >> 8
+	mem è espressa in numero di pagine
+	per	convertire mem in MB ->  totale kilobytes / numero kilobytes in un MB
+	totale kilobyte = num pagine * 4096 = num pagine << 12
+	numero kilobytes in un MB = 1000 (approssimato a 2^20) 
+	quindi mem [MB] =~  mem [pag] >> 8
 	*/
-	info_set(process_info, pid, comm, state, flags, (int) cpu_usage, mem >> 8);
+	mem = mem >> 8;
 
-	fclose(file);
-	close(stat_fd);
+	info_set(process_info, pid, comm, state, flags, (int) cpu_usage, mem); //FIXME
 	return process_info;
 }
 
 int filter(const struct dirent* dir){
-	//Seleziona solo le directory che hanno come nome un PID.
+	//Seleziona solo le entry relative a processi, ovvero directory che hanno come nome un numero (il PID del processo).
 	return dir->d_type == DT_DIR && isNumeric(dir->d_name);
 }
 
 info** getProcessesList(int* len){
+	//Apertura directory /proc/
 	int proc_fd;
 	proc_fd = open("/proc/", O_RDONLY | O_DIRECTORY);
 	if(proc_fd == -1){
-		perror("GetProcessesList: Errore apertura /proc/");
+		perror("GetProcessesList: Errore apertura directory /proc/");
 		return NULL;
 	}
 
+	//Filtra le directory relative a processi.
 	struct dirent** results;
 	int procs_n = scandirat(proc_fd, ".", &results, &filter, NULL);
 	if (procs_n == -1){
-        perror("GetProcessesList: Errore Scandir");
+        perror("GetProcessesList: Errore lettura directory /proc/");
 		close(proc_fd);
 		return NULL;
 	}
 
-	#ifdef DEBUG
-		printf("Trovati %d processi.\n", procs_n);
-	#endif
-
+	//Creazione array per salvare info processi
 	info** processes = malloc(procs_n * sizeof(info*));
 	if(!processes){
 		perror("GetProcessesList: Errore allocazione array processi");
-		
-		for(int i = 0 ; i<procs_n; i++){
+		//Dealloca array dirent
+		for(int i = 0 ; i<procs_n; i++)
 			free(results[i]);
-		}
 		free(results);
 		close(proc_fd);
 		return NULL;
 	}
 
+	//Ricava e salva le informazioni di ogni processo.
 	for(int i = 0; i<procs_n; i++){
 		int pid_fd = openat(proc_fd, results[i]->d_name, O_RDONLY | O_DIRECTORY);
 		if(pid_fd == -1){
-			fprintf(stderr, "GetProcessesList: Errore Openat per il processo %d: %s\n", i, strerror(errno));
+			fprintf(stderr, "GetProcessesList: Errore Openat processo %d: %s\n", i, strerror(errno));
 			processes[i] = NULL;
 			continue;
 		}
 		
+		//Lettura info processo
 		info* proc = getProcessInfo(pid_fd); 
 		//NOTE in caso di errore proc vale NULL
 		processes[i] = proc;
 		
 		close(pid_fd);
+		//Dealloca singola entry
 		free(results[i]);
 	}
-	
-	close(proc_fd);
 	free(results);
+
+	//Salva dimensione array processi
 	*len = procs_n;
+	close(proc_fd);
 	return processes;
 }

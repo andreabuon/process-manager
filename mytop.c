@@ -6,7 +6,7 @@
 #define UI_FILE "mytop.ui"
 
 enum columns_names{
-	COLUMN_COMMAND,
+	COLUMN_COMMAND = 0,
 	COLUMN_PID,
 	COLUMN_STATE,
 	COLUMN_FLAGS,
@@ -17,7 +17,7 @@ enum columns_names{
 
 GtkTreeView *treeview = NULL; //FIXME
 
-//Ottiene la lista dei processi in esecuzione e li inserisce nella GtkListStore in input
+//Ottiene la lista dei processi in esecuzione e inserisce i loro dati nella GtkListStore in input
 void loadProcesses(GtkListStore *liststore){
 	int size;
 	info** processList = getProcessesList(&size);
@@ -42,16 +42,17 @@ void loadProcesses(GtkListStore *liststore){
 //Aggiorna i dati nella TreeView 
 void updateTreeView(){
 	if(!treeview) return;
-	GtkListStore* old = (GtkListStore*) gtk_tree_view_get_model(treeview);
+
+	GtkListStore* prev_liststore = (GtkListStore*) gtk_tree_view_get_model(treeview);
 	gtk_tree_view_set_model(treeview, NULL); //rimuove il modello corrente
-	if(old){
-		gtk_list_store_clear(old); //elimina tutte le righe dal modello corrente
-		g_object_unref(old);
+	if(prev_liststore){
+		gtk_list_store_clear(prev_liststore); //elimina tutte le righe dal modello precedente
+		g_object_unref(prev_liststore);
 	}
 	
 	GtkListStore* liststore = gtk_list_store_new(COLS_NUM, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING, G_TYPE_LONG, G_TYPE_INT, G_TYPE_LONG);
 	loadProcesses(liststore);
-	gtk_tree_view_set_model(treeview, (GtkTreeModel*) liststore); //imposta il modello aggiornato
+	gtk_tree_view_set_model(treeview, (GtkTreeModel*) liststore); //imposta il nuovo modello aggiornato
 }
 
 //Ritorna il pid del processo selezionato nella TreeView. Ritorna -1 se nessuna riga è stata selezionata.

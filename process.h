@@ -3,7 +3,7 @@
 
 #define STATE_LEN 2
 
-//Struttura dati che contiene le informazioni che interessano del processo
+//Struttura dati che contiene le informazioni relative ad un processo
 typedef struct info{
 	pid_t pid;
 	char* command;
@@ -13,7 +13,8 @@ typedef struct info{
 	long memory; //resident memory [MB]
 } info;
 
-//Alloca una nuova struttura info e ne restituisce il puntatore. In caso di errore ritorna NULL.
+//Alloca una nuova struttura info e ne restituisce il puntatore.
+//In caso di errore ritorna NULL.
 info* info_new();
 
 //Dealloca la struttura info puntata dal puntatore in input
@@ -25,9 +26,13 @@ void info_set(info* info, pid_t pid, char* comm, char* state, unsigned flags, in
 //Stampa su console i dati del processo salvati nella struttura info in input
 void info_print(const info* process_info);
 
-//Crea una nuova struttura info con le informazioni relative ad un processo e ne ritorna il puntatore. Ritorna NULL in caso di errore.
-//Le informazioni vengono estratte dal file stat contenuto nella directory passata come argomento.
+//Crea una nuova struttura info contenete le informazioni relative ad un processo e ne ritorna il puntatore.
+//Le informazioni vengono estratte dal file "stat" contenuto nella directory dal file descriptor in input.
+//In caso di errore la funzione ritorna NULL.
 info* getProcessInfo(const int dir_fd);
 
-//Crea e ritorna array di info sui processi in esecuzione. Setta la variabile size in input con la dimensione dell'array. In caso di errore ritorna NULL.
+//Crea array di info sui processi in esecuzione.
+//La dimensione dell'array viene salvata nella variabile size in input. 
+//In caso di errore la funzione ritorna NULL.
+//L'array può contenere elementi nulli.
 info** getProcessesList(int* size);
