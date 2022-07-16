@@ -30,17 +30,16 @@ void info_free(info* process_info){
 	free(process_info);
 }
 
-void info_set(info* info, pid_t pid, char* comm, char* state, unsigned flags, int cpu, long mem){
+void info_set(info* info, pid_t pid, char* comm, unsigned flags, int cpu, long mem){
 	info->pid = pid;
 	info->command = comm;
-	strncpy(info->state, state, STATE_LEN);
 	info->flags = flags;
 	info->cpu_usage = cpu;
 	info->memory = mem;
 }
 
 void info_print(const info* process_info){
-	printf("%d %s %s %d %ld\n", process_info->pid, process_info->command, process_info->state, process_info->cpu_usage, process_info->memory);
+	printf("%d %s %d %ld\n", process_info->pid, process_info->command, process_info->cpu_usage, process_info->memory);
 }
 
 info* getProcessInfo(const int dir_fd){
@@ -60,7 +59,6 @@ info* getProcessInfo(const int dir_fd){
 
 	pid_t pid = 0; 
 	char* comm;
-	char state[STATE_LEN];
 	unsigned flags;
 	float cpu_usage;
 	long mem; //leggi dopo
@@ -73,7 +71,6 @@ info* getProcessInfo(const int dir_fd){
 	/* Parametri SCANF - per altre info consultare "man 5 proc"
 	(1) %d pid -> PID del processo
 	(2) (%m[^)]) comm -> Nome dell'eseguibile del processo, togliendo la parentesi tonda iniziale e finale. Alloca automaticamente la memoria necessaria per contenere la stringa e il null terminator. Il null terminator viene aggiunto automaticamente. Supporta anche nomi che contengono spazi (al contrario di %s) //FIXME errore su processo (sd-pam)
-	(3) %1s state -> Stato del processo. Lo stato è descritto da 1 carattere. Ho usato %s invece di %c in modo da aggiungere automaticamente il null terminator dopo il carattere e poter inserire facilmente il valore nella GUI.
 	(9) %u flags
 	(14) %lu utime
 	(15) %lu stime
@@ -82,8 +79,8 @@ info* getProcessInfo(const int dir_fd){
 	(24) %ld -> memoria residente
 	*/
 	int ret;
-	ret = fscanf(file, "%d (%m[^)]) %1s %*d %*d %*d %*d %*d %u %*u %*u %*u %*u %lu %lu %*d %*d %*d %*d %*d %*d %llu %*u %ld", &pid, &comm, state, &flags, &utime, &stime, &starttime, &mem);
-	if(ret==EOF || ret < 8){
+	ret = fscanf(file, "%d (%m[^)]) %*c %*d %*d %*d %*d %*d %u %*u %*u %*u %*u %lu %lu %*d %*d %*d %*d %*d %*d %llu %*u %ld", &pid, &comm, &flags, &utime, &stime, &starttime, &mem);
+	if(ret==EOF || ret < 7){
 		if(ret == EOF)
 			perror("getProcessInfo: Errore fscanf");
 		else
@@ -135,7 +132,7 @@ info* getProcessInfo(const int dir_fd){
 	*/
 	mem = mem >> 8;
 
-	info_set(process_info, pid, comm, state, flags, (int) cpu_usage, mem); //FIXME
+	info_set(process_info, pid, comm, flags, (int) cpu_usage, mem); //FIXME
 	return process_info;
 }
 

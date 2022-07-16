@@ -1,13 +1,10 @@
 #pragma once
 #include <sys/types.h>
 
-#define STATE_LEN 2
-
 //Struttura dati che contiene le informazioni relative ad un processo
 typedef struct info{
 	pid_t pid;
 	char* command;
-	char state[STATE_LEN];
 	unsigned flags;
 	int cpu_usage;
 	long memory; //resident memory [MB]
@@ -21,7 +18,7 @@ info* info_new();
 void info_free(info* process_info);
 
 //Imposta i campi della struttura info
-void info_set(info* info, pid_t pid, char* comm, char* state, unsigned flags, int cpu, long mem);
+void info_set(info* info, pid_t pid, char* comm, unsigned flags, int cpu, long mem);
 
 //Stampa su console i dati del processo salvati nella struttura info in input
 void info_print(const info* process_info);
