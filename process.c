@@ -11,9 +11,6 @@
 #include "process.h"
 #include "util.h"
 
-//Flag Kernel Thread (da "/linux/sched.h")
-#define PF_KTHREAD 0x00200000 
-
 info* info_new(){
 	info* process_info = malloc(sizeof(info));
 	if(!process_info){
@@ -51,15 +48,13 @@ int parseData(FILE* file, info* process_info){
 	unsigned flags;
 	float cpu_usage;
 	long mem;
-
-	//variabili necessarie per calcolo uso della cpu
 	long unsigned utime, stime; //espresso in clock ticks
 	long long unsigned starttime; //espresso in secondi
 	long ticks = sysconf(_SC_CLK_TCK); //numero clock ticks al secondo
 
-	/* Parametri SCANF - per altre info consultare "man 5 proc"
+	/* contenuto /proc/[pid]/stat - per altre info consultare "man 5 proc"
 	(1) %d pid -> PID del processo
-	(2) (%m[^)]) comm -> Nome dell'eseguibile del processo, togliendo la parentesi tonda iniziale e finale. Alloca automaticamente la memoria necessaria per contenere la stringa e il null terminator. Il null terminator viene aggiunto automaticamente. Supporta anche nomi che contengono spazi (a differenza di "%s") //FIXME processo (sd-pam) provoca errore
+	(2) %s comm -> Nome dell'eseguibile del processo. Uso "%*[(]%m[^)]%*[)]" per togliere le parentesi tonde iniziali e finali. Alloca automaticamente la memoria necessaria per contenere la stringa e il null terminator. Il null terminator viene aggiunto automaticamente. Supporta anche nomi che contengono spazi (a differenza di "%s")
 	(9) %u flags
 	(14) %lu utime
 	(15) %lu stime
@@ -67,7 +62,7 @@ int parseData(FILE* file, info* process_info){
 	(24) %ld rss -> memoria residente
 	(-) %* -> valori ignorati
 	*/
-	char* format_string = "%d (%m[^)]) %*c %*d %*d %*d %*d %*d %u %*u %*u %*u %*u %lu %lu %*d %*d %*d %*d %*d %*d %llu %*u %ld";
+	char* format_string = "%d %*[(]%m[^)]%*[)] %*c %*d %*d %*d %*d %*d %u %*u %*u %*u %*u %lu %lu %*d %*d %*d %*d %*d %*d %llu %*u %ld";
 	ret = fscanf(file, format_string, &pid, &comm, &flags, &utime, &stime, &starttime, &mem);
 	if(ret==EOF || ret < 7){
 		if(ret == EOF)
@@ -90,13 +85,7 @@ int parseData(FILE* file, info* process_info){
 	*/
 	mem = mem >> 8;
 
-	//Ignora Kernel Threads //TODO //FIXME //HACK
-	if(flags & PF_KTHREAD){
-		free(comm);
-		return 1;
-	}
-
-	//CALCOLO USO CPU
+	//CALCOLO USO CPU - media uso cpu su uptime //FIXME
 	long unsigned uptime;
 	FILE* uptime_file = fopen("/proc/uptime", "r");
 	if(uptime_file){
@@ -109,7 +98,7 @@ int parseData(FILE* file, info* process_info){
 	}
 	//fine CPU
 
-	info_set(process_info, pid, comm, flags, (int) cpu_usage, mem); //FIXME
+	info_set(process_info, pid, comm, flags, (int) cpu_usage, mem);
 	return 0;
 }
 

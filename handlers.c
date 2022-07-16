@@ -14,7 +14,6 @@ void sendSignal(int signal_n){
 	int ret = kill(pid, signal_n);
 	if(ret){
 		perror("sendSignal: Errore invio segnale");
-		return;
 	}
 	#ifdef DEBUG
 		printf("Sent signal %d to pid %d.\n", signal_n, pid);
