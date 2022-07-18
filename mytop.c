@@ -8,6 +8,7 @@
 enum columns_names{
 	COLUMN_COMMAND = 0,
 	COLUMN_PID,
+	COLUMN_STATE,
 	COLUMN_FLAGS,
 	COLUMN_CPU,
 	COLUMN_MEMORY,
@@ -31,7 +32,7 @@ void loadProcessesData(GtkListStore *liststore){
 
 		GtkTreeIter iter;
 		gtk_list_store_append(liststore, &iter);
-		gtk_list_store_set(liststore, &iter, COLUMN_COMMAND, process->command, COLUMN_PID, process->pid, COLUMN_FLAGS, process->flags, COLUMN_CPU, process->cpu_usage, COLUMN_MEMORY, process->memory, -1);
+		gtk_list_store_set(liststore, &iter, COLUMN_COMMAND, process->command, COLUMN_PID, process->pid, COLUMN_STATE, getStateString(process->state), COLUMN_FLAGS, process->flags, COLUMN_CPU, process->cpu_usage, COLUMN_MEMORY, process->memory, -1);
 		
 		info_free(process);
 	}
@@ -49,7 +50,7 @@ void updateTreeView(){
 		g_object_unref(prev_liststore);
 	}
 	
-	GtkListStore* liststore = gtk_list_store_new(COLS_NUM, G_TYPE_STRING, G_TYPE_INT, G_TYPE_LONG, G_TYPE_INT, G_TYPE_LONG);
+	GtkListStore* liststore = gtk_list_store_new(COLS_NUM, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING, G_TYPE_LONG, G_TYPE_INT, G_TYPE_LONG);
 	loadProcessesData(liststore);
 	gtk_tree_view_set_model(treeview, (GtkTreeModel*) liststore); //imposta il nuovo modello aggiornato
 }

@@ -27,9 +27,10 @@ void info_free(info* process_info){
 	free(process_info);
 }
 
-void info_set(info* info, pid_t pid, char* comm, unsigned flags, int cpu, long mem){
+void info_set(info* info, pid_t pid, char* comm, char state, unsigned flags, int cpu, long mem){
 	info->pid = pid;
 	info->command = comm;
+	info->state = state;
 	info->flags = flags;
 	info->cpu_usage = cpu;
 	info->memory = mem;
@@ -45,6 +46,7 @@ int parseData(FILE* file, info* process_info){
 
 	pid_t pid = 0; 
 	char* comm;
+	char state;
 	unsigned flags;
 	float cpu_usage;
 	long mem;
@@ -62,8 +64,8 @@ int parseData(FILE* file, info* process_info){
 	(24) %ld rss -> memoria residente
 	(-) %* -> valori ignorati
 	*/
-	char* format_string = "%d %*[(]%m[^)]%*[)] %*c %*d %*d %*d %*d %*d %u %*u %*u %*u %*u %lu %lu %*d %*d %*d %*d %*d %*d %llu %*u %ld";
-	ret = fscanf(file, format_string, &pid, &comm, &flags, &utime, &stime, &starttime, &mem);
+	char* format_string = "%d %*[(]%m[^)]%*[)] %c %*d %*d %*d %*d %*d %u %*u %*u %*u %*u %lu %lu %*d %*d %*d %*d %*d %*d %llu %*u %ld";
+	ret = fscanf(file, format_string, &pid, &comm, &state, &flags, &utime, &stime, &starttime, &mem);
 	if(ret==EOF || ret < 7){
 		if(ret == EOF)
 			perror("parseData: Errore fscanf");
@@ -98,7 +100,7 @@ int parseData(FILE* file, info* process_info){
 	}
 	//fine CPU
 
-	info_set(process_info, pid, comm, flags, (int) cpu_usage, mem);
+	info_set(process_info, pid, comm, state, flags, (int) cpu_usage, mem);
 	return 0;
 }
 
@@ -193,4 +195,34 @@ info** getProcessesList(int* len){
 	*len = procs_n;
 	close(proc_fd);
 	return processes;
+}
+
+char* getStateString(char s){
+	switch(s){
+		case 'R':
+			return "Running";
+		case 'S':
+			return "Sleeping";
+		case 'D':
+			return "Waiting in uninterruptible disk sleep";
+		case 'Z':
+			return "Zombie";
+		case 'T':
+			return "Stopped";
+		case 'X':
+			return "Dead";
+		case 'x':
+			return "Dead";
+		case 'K':
+			return "Wavekill";
+		case 'W':
+			return "Waking";
+		case 'P':
+			return "Parking";
+		//
+		case 'I':
+			return "Idle";
+		default:
+			return "?";
+	}
 }

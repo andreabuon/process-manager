@@ -5,6 +5,7 @@
 typedef struct info{
 	pid_t pid;
 	char* command;
+	char state;
 	unsigned flags;
 	int cpu_usage;
 	long memory; //resident memory [MB]
@@ -18,7 +19,7 @@ info* info_new();
 void info_free(info* process_info);
 
 //Imposta i campi della struttura info
-void info_set(info* info, pid_t pid, char* comm, unsigned flags, int cpu, long mem);
+void info_set(info* info, pid_t pid, char* comm, char state, unsigned flags, int cpu, long mem);
 
 //Stampa su console i dati del processo salvati nella struttura info in input
 void info_print(const info* process_info);
@@ -33,3 +34,6 @@ info* getProcessInfo(const int dir_fd);
 //In caso di errore la funzione ritorna NULL.
 //L'array può contenere elementi nulli.
 info** getProcessesList(int* size);
+
+//Restituisce descrizione dello stato di un processo dato un carattere. esempio: S -> Sleeping
+char* getStateString(char s);//FIXME //HACK //TODO
