@@ -53,6 +53,7 @@ void updateTreeView(){
 	GtkListStore* liststore = gtk_list_store_new(COLS_NUM, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING, G_TYPE_LONG, G_TYPE_INT, G_TYPE_LONG);
 	loadProcessesData(liststore);
 	gtk_tree_view_set_model(treeview, (GtkTreeModel*) liststore); //imposta il nuovo modello aggiornato
+	gtk_tree_view_expand_all(treeview);
 }
 
 //Ritorna il pid del processo selezionato nella TreeView. Ritorna -1 se nessuna riga è stata selezionata.

@@ -3,8 +3,8 @@
   <requires lib="gtk" version="4.6"/>
   <object class="GtkWindow" id="window">
     <property name="title">Andrea's Top</property>
-    <property name="default-width">600</property>
-    <property name="default-height">600</property>
+    <property name="default-width">650</property>
+    <property name="default-height">700</property>
     <property name="resizable">false</property>
     
     <child type="titlebar">
@@ -32,7 +32,6 @@
               <child>
                 <object class="GtkTreeViewColumn">
                   <property name="title">Processo</property>
-                  <property name="expand">True</property>
                   <property name="sort-column-id">0</property>
   
                   <child>
@@ -47,7 +46,6 @@
               <child>
                 <object class="GtkTreeViewColumn">
                   <property name="title">PID</property>
-                  <property name="expand">True</property>
                   <property name="sort-column-id">1</property>
   
                   <child>
@@ -77,7 +75,6 @@
                 <object class="GtkTreeViewColumn">
                   <property name="title">Flags</property>
                   <property name="visible">False</property>
-                  <property name="expand">True</property>
                   <property name="sort-column-id">3</property>
   
                   <child>
@@ -93,7 +90,6 @@
               <child>
                 <object class="GtkTreeViewColumn">
                   <property name="title">CPU [%]</property>
-                  <property name="expand">True</property>
                   <property name="sort-column-id">4</property>
                   <child>
                     <object class="GtkCellRendererText"/>
@@ -108,7 +104,6 @@
               <child>
                 <object class="GtkTreeViewColumn">
                   <property name="title">Memoria [MB]</property>
-                  <property name="expand">True</property>
                   <property name="sort-column-id">5</property>
   
                   <child>
