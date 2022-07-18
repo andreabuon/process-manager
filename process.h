@@ -37,7 +37,7 @@ info* getProcessInfo(const int dir_fd);
 //L'array può contenere elementi nulli.
 info** getProcessesList(int* size);
 
-//Restituisce descrizione dello stato di un processo dato un carattere. esempio: S -> Sleeping
-char* getStateString(char s);//FIXME //HACK //TODO
+//Dato un carattere che rappresenta lo stato di un processo ne restituisce una breve descrizione. Esempio: S -> "Sleeping"
+char* getStateString(char s);
 
 #endif //PROCESS_H
