@@ -26,10 +26,15 @@ void info_set(info* info, pid_t pid, char* comm, char state, unsigned flags, int
 //Stampa su console i dati del processo salvati nella struttura info in input
 void info_print(const info* process_info);
 
-//Crea una nuova struttura info contenete le informazioni relative ad un processo e ne ritorna il puntatore.
+//Crea una nuova struttura info contenente le informazioni relative ad un processo e ne ritorna il puntatore.
 //Le informazioni vengono estratte dal file "stat" contenuto nella directory dal file descriptor in input.
 //In caso di errore la funzione ritorna NULL.
-info* getProcessInfo(const int dir_fd);
+info* getProcessInfoByFD(const int dir_fd);
+
+//Funzione che prende come input il PID di un processo e ritorna una struttura info con tutte le sue info. In caso di errore ritorna NULL;
+//Le informazioni vengono estratte dal file "stat" contenuto nella directory /proc/[pid]/stat.
+//In caso di errore la funzione ritorna NULL.
+info* getProcessInfoByPid(pid_t pid);
 
 //Crea array di info sui processi in esecuzione.
 //La dimensione dell'array viene salvata nella variabile size in input. 
@@ -37,7 +42,7 @@ info* getProcessInfo(const int dir_fd);
 //L'array può contenere elementi nulli.
 info** getProcessesList(int* size);
 
-//Dato un carattere che rappresenta lo stato di un processo ne restituisce una breve descrizione. Esempio: S -> "Sleeping"
+//Dato un carattere che rappresenta lo stato di un processo ne restituisce una breve descrizione. Esempio: 'S' -> "Sleeping"
 char* getStateString(char s);
 
 #endif //PROCESS_H

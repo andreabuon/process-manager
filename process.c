@@ -104,7 +104,7 @@ int parseData(FILE* file, info* process_info){
 	return 0;
 }
 
-info* getProcessInfo(const int dir_fd){
+info* getProcessInfoByFD(const int dir_fd){
 	//Apertura file "stat" nella directory dir_fd (in input). dir_fd = /proc/[pid]
 	int stat_fd = openat(dir_fd, "stat", O_RDONLY);
 	if(stat_fd == -1){
@@ -135,6 +135,34 @@ info* getProcessInfo(const int dir_fd){
 
 	fclose(stat_file);
 	close(stat_fd);
+	return process_info;
+}
+
+info* getProcessInfoByPid(pid_t pid){
+	#define PATH_LEN 255 //FIXME
+	char* path = malloc(PATH_LEN * sizeof(char));
+	snprintf(path, PATH_LEN, "/proc/%d/stat", pid);
+	printf("Path: %s\n", path);
+
+	info* process_info = info_new();
+	if(!process_info){
+		return NULL;
+	}
+
+	FILE* stat_file = fopen(path, "r");
+	if(!stat_file){
+		free(path);
+		return NULL;
+	}
+	int ret = parseData(stat_file, process_info);
+	if(ret){
+		fclose(stat_file);
+		free(path);
+		return NULL;
+	}
+
+	fclose(stat_file);
+	free(path);
 	return process_info;
 }
 
@@ -183,7 +211,7 @@ info** getProcessesList(int* len){
 		
 		//Lettura info processo
 		//NOTE in caso di errore imposta a NULL
-		processes[i] = getProcessInfo(pid_fd); 
+		processes[i] = getProcessInfoByFD(pid_fd); 
 		
 		close(pid_fd);
 		//Dealloca singola entry
