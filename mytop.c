@@ -56,6 +56,28 @@ void updateTreeView(){
 	gtk_tree_view_expand_all(treeview);
 }
 
+//Aggiorna i dati del processo selezionato nella TreeView.
+void updateRow(){
+	GtkTreeSelection* treeSelection = gtk_tree_view_get_selection(treeview);
+	GtkTreeModel* model;
+	GtkTreeIter iter;
+	gboolean res = gtk_tree_selection_get_selected(treeSelection, &model, &iter);
+	if(!res){
+		fprintf(stderr, "updateRow: Nessuna riga selezionata.\n");
+	}
+
+	pid_t pid;
+	gtk_tree_model_get(model, &iter, COLUMN_PID, &pid, -1);
+
+	info* process = getProcessInfoByPid(pid);
+	if(!process){
+		gtk_list_store_remove((GtkListStore*) model, &iter);
+		return;
+	}
+	gtk_list_store_set((GtkListStore*)model, &iter, COLUMN_COMMAND, process->command, COLUMN_PID, process->pid, COLUMN_STATE, getStateString(process->state), COLUMN_FLAGS, process->flags, COLUMN_CPU, process->cpu_usage, COLUMN_MEMORY, process->memory, -1);
+	info_free(process);
+}
+
 //Ritorna il pid del processo selezionato nella TreeView. Ritorna -1 se nessuna riga è stata selezionata.
 pid_t getSelectedPID(){
 	GtkTreeSelection* treeSelection = gtk_tree_view_get_selection(treeview);

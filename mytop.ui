@@ -115,11 +115,6 @@
   
                 </object>
               </child>
-  
-            <child internal-child="selection">
-              <object class="GtkTreeSelection" id="selection">
-              </object>
-            </child>
             </object>
           </child>
         </object>

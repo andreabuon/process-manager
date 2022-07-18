@@ -142,10 +142,10 @@ info* getProcessInfoByPid(pid_t pid){
 	#define PATH_LEN 255 //FIXME
 	char* path = malloc(PATH_LEN * sizeof(char));
 	snprintf(path, PATH_LEN, "/proc/%d/stat", pid);
-	printf("Path: %s\n", path);
 
 	info* process_info = info_new();
 	if(!process_info){
+		free(path);
 		return NULL;
 	}
 

@@ -4,6 +4,7 @@
 #include "handlers.h"
 
 extern pid_t getSelectedPID();
+extern void updateRow();
 extern void updateTreeView();
 
 void sendSignal(int signal_n){
@@ -18,7 +19,8 @@ void sendSignal(int signal_n){
 	#ifdef DEBUG
 		printf("Sent signal %d to pid %d.\n", signal_n, pid);
 	#endif
-	updateTreeView();
+	
+	updateRow();
 }
 
 void killProcess(){
