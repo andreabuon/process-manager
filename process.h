@@ -1,4 +1,6 @@
-#pragma once
+#ifndef PROCESS_H
+#define PROCESS_H
+
 #include <sys/types.h>
 
 //Struttura dati che contiene le informazioni relative ad un processo
@@ -37,3 +39,5 @@ info** getProcessesList(int* size);
 
 //Restituisce descrizione dello stato di un processo dato un carattere. esempio: S -> Sleeping
 char* getStateString(char s);//FIXME //HACK //TODO
+
+#endif //PROCESS_H
