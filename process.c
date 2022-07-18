@@ -37,7 +37,7 @@ void info_set(info* info, pid_t pid, char* comm, char state, unsigned flags, int
 }
 
 void info_print(const info* process_info){
-	printf("%d %s %d %ld\n", process_info->pid, process_info->command, process_info->cpu_usage, process_info->memory);
+	printf("%d %s %c %d %ld\n", process_info->pid, process_info->command, process_info->state, process_info->cpu_usage, process_info->memory);
 }
 
 //Esegue il parsing dei dati del processo dal file e li salva nella struttura process_info. Ritorna 0 in caso di successo e 1 in caso di errore.
