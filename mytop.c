@@ -41,23 +41,34 @@ void loadProcessesData(GtkListStore *liststore){
 	free(processList);
 }
 
-//Aggiorna i dati nella TreeView 
+//Aggiorna i dati nella TreeView mantenendo l'ordinamento selezionato.
 void updateTreeView(){
 	if(!treeview) return;
+	//Ordinamento di default
+	gint column_num = COLUMN_CPU;
+	GtkSortType sort_type = GTK_SORT_DESCENDING;
 
-	GtkListStore* prev_liststore =  GTK_LIST_STORE(gtk_tree_view_get_model(treeview));
-	gtk_tree_view_set_model(treeview, NULL); //rimuove il modello corrente
-	if(prev_liststore){
-		gtk_list_store_clear(prev_liststore); //elimina tutte le righe dal modello precedente
+	GtkTreeModel* prev_sorted_model = gtk_tree_view_get_model(treeview);
+	if(prev_sorted_model){
+		//Recupera il modello precedente
+		GtkListStore* prev_liststore =  GTK_LIST_STORE(gtk_tree_model_sort_get_model(GTK_TREE_MODEL_SORT(prev_sorted_model)));
+		//Salva l'ordinamento selezionato
+		gtk_tree_sortable_get_sort_column_id(GTK_TREE_SORTABLE(prev_sorted_model), &column_num, &sort_type);
+		//Rimuovi ed elimina il modello precedente
+		gtk_tree_view_set_model(treeview, NULL);
+		gtk_list_store_clear(prev_liststore);
 		g_object_unref(prev_liststore);
 	}
-	
+	//Creazione nuovo modello
 	GtkListStore* liststore = gtk_list_store_new(COLS_NUM, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING, G_TYPE_LONG, G_TYPE_INT, G_TYPE_LONG);
+	//Carica i dati
 	loadProcessesData(liststore);
-	gtk_tree_view_set_model(treeview, GTK_TREE_MODEL(liststore)); //imposta il nuovo modello aggiornato
-	//gtk_tree_view_expand_all(treeview);
+	GtkTreeModel* sorted_model = gtk_tree_model_sort_new_with_model(GTK_TREE_MODEL(liststore));
+	//Ordina i dati
+	gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(sorted_model), column_num, sort_type);
+	//Imposta il nuovo modello
+	gtk_tree_view_set_model(treeview, GTK_TREE_MODEL(sorted_model));
 }
-
 //Aggiorna i dati del processo selezionato nella TreeView.
 void updateRow(){
 	GtkTreeSelection* treeSelection = gtk_tree_view_get_selection(treeview);
@@ -113,7 +124,7 @@ static void buildWindow(GtkApplication *app, gpointer user_data){
 	GtkBuilder *builder = gtk_builder_new_from_file(UI_FILE);
 
 	window = GTK_WINDOW(gtk_builder_get_object(builder, "window"));
-	gtk_window_set_application(window, app);
+	gtk_window_set_application(GTK_WINDOW(window), app);
 	
 	treeview = GTK_TREE_VIEW(gtk_builder_get_object(builder, "treeview"));
 	

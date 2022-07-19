@@ -33,6 +33,7 @@
                 <object class="GtkTreeViewColumn">
                   <property name="title">Processo</property>
                   <property name="resizable">true</property>
+                  <property name="expand">true</property>
                   <property name="sort-column-id">0</property>
   
                   <child>
