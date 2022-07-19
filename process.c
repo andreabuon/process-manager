@@ -69,7 +69,7 @@ int parseProcessData(FILE* file, info* process_info){
 	*/
 	char* format_string = "%d %*[(]%m[^)]%*[)] %c %*d %*d %*d %*d %*d %u %*u %*u %*u %*u %lu %lu %*d %*d %*d %*d %*d %*d %llu %*u %ld";
 	ret = fscanf(file, format_string, &pid, &comm, &state, &flags, &utime, &stime, &starttime, &rss);
-	if(ret==EOF || ret < 8){
+	if(ret==EOF || ret < 8){ //FIXME
 		if(ret == EOF)
 			fprintf(stderr, "%s: Errore Scanf: %s\n", __func__, strerror(errno));
 		else
@@ -106,20 +106,19 @@ int parseProcessData(FILE* file, info* process_info){
 }
 
 info* getProcessInfoByFD(const int dir_fd){
-	//Apertura file "stat" nella directory dir_fd (in input). dir_fd = /proc/[pid]
+	//Apertura file "stat" nella directory dir_fd (in input). dir_fd = "/proc/[pid]"
 	int stat_fd = openat(dir_fd, "stat", O_RDONLY);
 	if(stat_fd == -1){
 		fprintf(stderr, "%s: Errore Openat: %s\n", __func__, strerror(errno));
 		return NULL;
 	}
-
 	FILE* stat_file = fdopen(stat_fd, "r");
 	if(!stat_file){
 		fprintf(stderr, "%s: Errore fdopen: %s\n", __func__, strerror(errno));
 		close(stat_fd);
 		return NULL;
 	}
-
+	//Parsing e salvataggio dei dati del processo
 	info* process_info = info_new();
 	if(!process_info){
 		fclose(stat_file);
@@ -188,7 +187,7 @@ info** getProcessesList(int* len){
 	struct dirent** results;
 	int procs_n = scandirat(proc_fd, ".", &results, &filter, NULL);
 	if (procs_n == -1){
-		fprintf(stderr, "%s: Errore lettura directory /proc/: %s\n", __func__, strerror(errno));
+		fprintf(stderr, "%s: Errore scansione directory /proc/: %s\n", __func__, strerror(errno));
 		close(proc_fd);
 		return NULL;
 	}
@@ -229,6 +228,7 @@ info** getProcessesList(int* len){
 
 	//Salva dimensione array processi
 	*len = procs_n;
+
 	close(proc_fd);
 	return processes;
 }
@@ -240,10 +240,12 @@ char* getStateString(char s){
 		case 'S':
 			return "Sleeping";
 		case 'D':
-			return "Waiting in uninterruptible disk sleep";
+			return "Waiting";
 		case 'Z':
 			return "Zombie";
 		case 'T':
+			return "Stopped";
+		case 't':
 			return "Stopped";
 		case 'X':
 			return "Dead";
