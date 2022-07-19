@@ -1,5 +1,6 @@
 #include <gtk/gtk.h>
 #include <sys/types.h>
+#include "mytop.h"
 #include "process.h"
 #include "handlers.h"
 

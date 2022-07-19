@@ -5,7 +5,7 @@ all: mytop
 mytop: mytop.o process.o handlers.o util.o
 	gcc $(FLAGS) -o mytop *.o `pkg-config --libs gtk4`
 
-mytop.o: mytop.c
+mytop.o: mytop.c mytop.h
 	gcc $(FLAGS) -c mytop.c `pkg-config --cflags gtk4`
 
 handlers.o: handlers.c handlers.h

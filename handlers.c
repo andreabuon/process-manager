@@ -4,12 +4,7 @@
 #include <string.h>
 #include <errno.h>
 #include "handlers.h"
-
-//TODO remove
-extern pid_t getSelectedPID();
-extern void updateRow();
-extern void updateTreeView();
-extern void showErrorDialog();
+#include "mytop.h"
 
 void sendSignal(int signal_n){
 	pid_t pid = getSelectedPID();
