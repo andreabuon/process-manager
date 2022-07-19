@@ -19,6 +19,14 @@ enum columns_names{
 GtkWindow *window = NULL;
 GtkTreeView *treeview = NULL;
 
+//Visualizza una finestra di dialogo con una descrizione dell'errore.
+void showErrorDialog(char* error){
+	GtkWidget *dialog = gtk_message_dialog_new(window, GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE, "Errore");
+	gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog), error);
+	g_signal_connect(dialog, "response", G_CALLBACK(gtk_window_destroy), NULL);
+	gtk_widget_show(dialog);
+}
+
 //Ottiene la lista dei processi in esecuzione e inserisce i loro dati nella GtkListStore in input
 void loadProcessesData(GtkListStore *liststore){
 	//Ottieni lista processi
@@ -26,6 +34,7 @@ void loadProcessesData(GtkListStore *liststore){
 	info** processList = getProcessesList(&size);
 	if(!processList){
 		fprintf(stderr, "%s:  Errore caricamento lista processi.\n", __func__);
+		showErrorDialog("Errore caricamento lista processi.");
 		return;
 	}
 
@@ -62,6 +71,7 @@ void updateTreeView(){
 		gtk_list_store_clear(GTK_LIST_STORE(prev_model));
 		g_object_unref(prev_model);
 	}
+
 	//Creazione nuovo modello dati
 	GtkListStore* liststore = gtk_list_store_new(COLS_NUM, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING, G_TYPE_LONG, G_TYPE_INT, G_TYPE_LONG);
 	loadProcessesData(liststore);
@@ -90,7 +100,7 @@ void updateRow(){
 	info* process = getProcessInfo(pid);
 	if(!process){
 		fprintf(stderr, "%s: Errore lettura info del processo %d.\n", __func__, pid);
-		gtk_list_store_remove(GTK_LIST_STORE(model), &iter); //TODO
+		//gtk_list_store_remove(GTK_LIST_STORE(model), &iter); //TODO
 		return;
 	}
 	//Aggiorna i dati della riga selezionata
@@ -120,14 +130,6 @@ pid_t getSelectedPID(){
 	return pid;
 }
 
-//Visualizza una finestra di dialogo con una descrizione dell'errore.
-void showErrorDialog(char* error){
-	GtkWidget *dialog = gtk_message_dialog_new(window, GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE, "Errore");
-	gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog), error);
-	g_signal_connect(dialog, "response", G_CALLBACK(gtk_window_destroy), NULL);
-	gtk_widget_show(dialog);
-}
-
 //Costruisce la finestra e i vari elementi. Legge la descrizione dell'interfaccia grafica da file.
 static void buildWindow(GtkApplication *app, gpointer user_data){
 	GtkBuilder *builder = gtk_builder_new_from_file(UI_FILE);
@@ -138,15 +140,15 @@ static void buildWindow(GtkApplication *app, gpointer user_data){
 	treeview = GTK_TREE_VIEW(gtk_builder_get_object(builder, "treeview"));
 	
 	//Assegna funzioni ai pulsanti
-	GtkButton *btn_kill = GTK_BUTTON(gtk_builder_get_object(builder, "btn_kill"));
+	GObject *btn_kill = gtk_builder_get_object(builder, "btn_kill");
 	g_signal_connect(btn_kill, "clicked", G_CALLBACK(killProcess), NULL);
-	GtkButton *btn_terminate = GTK_BUTTON(gtk_builder_get_object(builder, "btn_terminate"));
+	GObject *btn_terminate = gtk_builder_get_object(builder, "btn_terminate");
 	g_signal_connect(btn_terminate, "clicked", G_CALLBACK(terminateProcess), NULL);
-	GtkButton *btn_suspend = GTK_BUTTON(gtk_builder_get_object(builder, "btn_suspend"));
+	GObject *btn_suspend = gtk_builder_get_object(builder, "btn_suspend");
 	g_signal_connect(btn_suspend, "clicked", G_CALLBACK(suspendProcess), NULL);
-	GtkButton *btn_resume = GTK_BUTTON(gtk_builder_get_object(builder, "btn_resume"));
+	GObject *btn_resume = gtk_builder_get_object(builder, "btn_resume");
 	g_signal_connect(btn_resume, "clicked", G_CALLBACK(resumeProcess), NULL);
-	GtkButton *btn_refresh = GTK_BUTTON(gtk_builder_get_object(builder, "btn_refresh"));
+	GObject *btn_refresh = gtk_builder_get_object(builder, "btn_refresh");
 	g_signal_connect(btn_refresh, "clicked", G_CALLBACK(updateTreeView), NULL);
 
 	gtk_widget_show(GTK_WIDGET(window));
