@@ -23,7 +23,7 @@ GtkTreeView *treeview = NULL;
 
 //Visualizza una finestra di dialogo con una descrizione dell'errore.
 void showErrorDialog(char* error){
-	GtkWidget *dialog = gtk_message_dialog_new(window, GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE, "Errore");
+	GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(window), GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE, "Errore");
 	gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog), error);
 	g_signal_connect(dialog, "response", G_CALLBACK(gtk_window_destroy), NULL);
 	gtk_widget_show(dialog);
@@ -75,7 +75,15 @@ void updateTreeView(){
 	}
 
 	//Creazione nuovo modello dati
-	GtkListStore* liststore = gtk_list_store_new(COLS_NUM, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING, G_TYPE_LONG, G_TYPE_INT, G_TYPE_LONG);
+	GType tipi_colonne[COLS_NUM] = {
+									G_TYPE_STRING, //command
+									G_TYPE_INT, //pid
+									G_TYPE_STRING, //state
+									G_TYPE_LONG, //flags
+									G_TYPE_INT, //cpu
+									G_TYPE_LONG //memory
+									};
+	GtkListStore* liststore = gtk_list_store_newv(COLS_NUM, tipi_colonne);
 	loadProcessesData(liststore);
 	//Ordina i dati
 	gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(liststore), column_num, sort_type);
