@@ -45,11 +45,11 @@ int parseData(FILE* file, info* process_info){
 	int ret;
 
 	pid_t pid = 0; 
-	char* comm;
+	char* comm = NULL;
 	char state;
 	unsigned flags;
 	float cpu_usage;
-	long mem;
+	long rss; //memoria residente
 	long unsigned utime, stime; //espresso in clock ticks
 	long long unsigned starttime; //espresso in secondi
 	long ticks = sysconf(_SC_CLK_TCK); //numero clock ticks al secondo
@@ -57,6 +57,7 @@ int parseData(FILE* file, info* process_info){
 	/* contenuto /proc/[pid]/stat - per altre info consultare "man 5 proc"
 	(1) %d pid -> PID del processo
 	(2) %s comm -> Nome dell'eseguibile del processo. Uso "%*[(]%m[^)]%*[)]" per togliere le parentesi tonde iniziali e finali. Alloca automaticamente la memoria necessaria per contenere la stringa e il null terminator. Il null terminator viene aggiunto automaticamente. Supporta anche nomi che contengono spazi (a differenza di "%s")
+	(3) %c state
 	(9) %u flags
 	(14) %lu utime
 	(15) %lu stime
@@ -65,7 +66,7 @@ int parseData(FILE* file, info* process_info){
 	(-) %* -> valori ignorati
 	*/
 	char* format_string = "%d %*[(]%m[^)]%*[)] %c %*d %*d %*d %*d %*d %u %*u %*u %*u %*u %lu %lu %*d %*d %*d %*d %*d %*d %llu %*u %ld";
-	ret = fscanf(file, format_string, &pid, &comm, &state, &flags, &utime, &stime, &starttime, &mem);
+	ret = fscanf(file, format_string, &pid, &comm, &state, &flags, &utime, &stime, &starttime, &rss);
 	if(ret==EOF || ret < 7){
 		if(ret == EOF)
 			perror("parseData: Errore fscanf");
@@ -75,17 +76,18 @@ int parseData(FILE* file, info* process_info){
 		if(pid)
 			fprintf(stderr, " [%d]", pid);
 		fprintf(stderr, "\n");
+		if(comm) free(comm);
 		return 1;
 	}
 
 	/*
-	mem è espressa in numero di pagine
-	per	convertire mem in MB ->  totale kilobytes / numero kilobytes in un MB
-	totale kilobyte = num pagine * 4096 = num pagine << 12
+	la memoria residente è espressa in numero di pagine
+	per	convertirla in MB ->  totale kilobytes / numero kilobytes in un MB
+	totale kilobyte = numero pagine * 4096 = numero pagine << 12
 	numero kilobytes in un MB = 1000 (approssimato a 2^20) 
-	quindi mem [MB] =~  mem [pag] >> 8
+	quindi memoria [MB] =~  memoria [pagine] >> 8
 	*/
-	mem = mem >> 8;
+	rss = rss >> 8;
 
 	//CALCOLO USO CPU - media uso cpu su uptime //FIXME
 	long unsigned uptime;
@@ -100,7 +102,7 @@ int parseData(FILE* file, info* process_info){
 	}
 	//fine CPU
 
-	info_set(process_info, pid, comm, state, flags, (int) cpu_usage, mem);
+	info_set(process_info, pid, comm, state, flags, (int) cpu_usage, rss);
 	return 0;
 }
 
@@ -128,6 +130,7 @@ info* getProcessInfoByFD(const int dir_fd){
 
 	int ret = parseData(stat_file, process_info);
 	if(ret){
+		info_free(process_info);
 		fclose(stat_file);
 		close(stat_fd);
 		return NULL;
@@ -140,29 +143,27 @@ info* getProcessInfoByFD(const int dir_fd){
 
 info* getProcessInfoByPid(pid_t pid){
 	#define PATH_LEN 255 //FIXME
-	char* path = malloc(PATH_LEN * sizeof(char));
+	char path[PATH_LEN];
 	snprintf(path, PATH_LEN, "/proc/%d/stat", pid);
 
 	info* process_info = info_new();
 	if(!process_info){
-		free(path);
 		return NULL;
 	}
 
 	FILE* stat_file = fopen(path, "r");
 	if(!stat_file){
-		free(path);
+		info_free(process_info);
 		return NULL;
 	}
 	int ret = parseData(stat_file, process_info);
 	if(ret){
 		fclose(stat_file);
-		free(path);
+		info_free(process_info);
 		return NULL;
 	}
 
 	fclose(stat_file);
-	free(path);
 	return process_info;
 }
 
@@ -251,6 +252,6 @@ char* getStateString(char s){
 		case 'I':
 			return "Idle";
 		default:
-			return "?";
+			return "Unknown";
 	}
 }
