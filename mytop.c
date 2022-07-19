@@ -14,9 +14,10 @@ enum columns_names{
 	COLUMN_MEMORY,
 	COLS_NUM
 };
-
+ 
+//FIXME
 GtkWindow *window = NULL;
-GtkTreeView *treeview = NULL; //FIXME
+GtkTreeView *treeview = NULL;
 
 //Ottiene la lista dei processi in esecuzione e inserisce i loro dati nella GtkListStore in input
 void loadProcessesData(GtkListStore *liststore){
@@ -54,7 +55,7 @@ void updateTreeView(){
 	GtkListStore* liststore = gtk_list_store_new(COLS_NUM, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING, G_TYPE_LONG, G_TYPE_INT, G_TYPE_LONG);
 	loadProcessesData(liststore);
 	gtk_tree_view_set_model(treeview, GTK_TREE_MODEL(liststore)); //imposta il nuovo modello aggiornato
-	gtk_tree_view_expand_all(treeview);
+	//gtk_tree_view_expand_all(treeview);
 }
 
 //Aggiorna i dati del processo selezionato nella TreeView.
@@ -127,9 +128,9 @@ static void buildWindow(GtkApplication *app, gpointer user_data){
 	GtkButton *btn_refresh = GTK_BUTTON(gtk_builder_get_object(builder, "btn_refresh"));
 	g_signal_connect(btn_refresh, "clicked", G_CALLBACK(updateTreeView), NULL);
 
-	updateTreeView();
-
 	gtk_widget_show(GTK_WIDGET(window));
+
+	updateTreeView();
 
 	g_object_unref(builder);
 }

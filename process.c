@@ -11,6 +11,8 @@
 #include "process.h"
 #include "util.h"
 
+#define PATH_LEN 255
+
 info* info_new(){
 	info* process_info = malloc(sizeof(info));
 	if(!process_info){
@@ -41,18 +43,18 @@ void info_print(const info* process_info){
 }
 
 //Esegue il parsing dei dati del processo dal file e li salva nella struttura process_info. Ritorna 0 in caso di successo e 1 in caso di errore.
-int parseData(FILE* file, info* process_info){
+int parseProcessData(FILE* file, info* process_info){
 	int ret;
 
 	pid_t pid = 0; 
 	char* comm = NULL;
 	char state;
 	unsigned flags;
-	float cpu_usage;
-	long rss; //memoria residente
-	long unsigned utime, stime; //espresso in clock ticks
-	long long unsigned starttime; //espresso in secondi
-	long ticks = sysconf(_SC_CLK_TCK); //numero clock ticks al secondo
+	float cpu_usage = 0;
+	long rss;	//memoria residente
+	long unsigned utime, stime;	//espresso in clock ticks
+	long long unsigned starttime;	//espresso in secondi
+	long ticks = sysconf(_SC_CLK_TCK);	//numero clock ticks al secondo
 
 	/* contenuto /proc/[pid]/stat - per altre info consultare "man 5 proc"
 	(1) %d pid -> PID del processo
@@ -67,7 +69,7 @@ int parseData(FILE* file, info* process_info){
 	*/
 	char* format_string = "%d %*[(]%m[^)]%*[)] %c %*d %*d %*d %*d %*d %u %*u %*u %*u %*u %lu %lu %*d %*d %*d %*d %*d %*d %llu %*u %ld";
 	ret = fscanf(file, format_string, &pid, &comm, &state, &flags, &utime, &stime, &starttime, &rss);
-	if(ret==EOF || ret < 7){
+	if(ret==EOF || ret < 8){
 		if(ret == EOF)
 			fprintf(stderr, "%s: Errore Scanf: %s\n", __func__, strerror(errno));
 		else
@@ -77,6 +79,7 @@ int parseData(FILE* file, info* process_info){
 		return 1;
 	}
 
+	//Conversione Memoria da Numero Pagine a MegaBytes
 	/*
 	la memoria residente è espressa in numero di pagine
 	per	convertirla in MB ->  totale kilobytes / numero kilobytes in un MB
@@ -86,7 +89,7 @@ int parseData(FILE* file, info* process_info){
 	*/
 	rss = rss >> 8;
 
-	//CALCOLO USO CPU - media uso cpu su uptime //FIXME
+	//Calcolo Percentuale Utilizzo CPU - media uso cpu su uptime //FIXME
 	long unsigned uptime;
 	FILE* uptime_file = fopen("/proc/uptime", "r");
 	if(uptime_file){
@@ -97,7 +100,6 @@ int parseData(FILE* file, info* process_info){
 			cpu_usage = 100 * ((utime + stime) / ticks ) / uptime;
 		fclose(uptime_file);
 	}
-	//fine CPU
 
 	info_set(process_info, pid, comm, state, flags, (int) cpu_usage, rss);
 	return 0;
@@ -125,7 +127,7 @@ info* getProcessInfoByFD(const int dir_fd){
 		return NULL;
 	}
 
-	int ret = parseData(stat_file, process_info);
+	int ret = parseProcessData(stat_file, process_info);
 	if(ret){
 		info_free(process_info);
 		fclose(stat_file);
@@ -139,7 +141,7 @@ info* getProcessInfoByFD(const int dir_fd){
 }
 
 info* getProcessInfoByPid(pid_t pid){
-	#define PATH_LEN 255 //FIXME
+	//Compone stringa path file stat del processo
 	char path[PATH_LEN];
 	snprintf(path, PATH_LEN, "/proc/%d/stat", pid);
 
@@ -148,6 +150,7 @@ info* getProcessInfoByPid(pid_t pid){
 		return NULL;
 	}
 
+	//Apertura file stat
 	FILE* stat_file = fopen(path, "r");
 	if(!stat_file){
 		fprintf(stderr, "%s: Errore apertura file /proc/%d/stat: %s\n", __func__, pid, strerror(errno));
@@ -155,7 +158,8 @@ info* getProcessInfoByPid(pid_t pid){
 		return NULL;
 	}
 	
-	int ret = parseData(stat_file, process_info);
+	//Parsing e salvataggio dei dati del processo
+	int ret = parseProcessData(stat_file, process_info);
 	if(ret){
 		fprintf(stderr, "%s: Errore parsing dati processo %d.\n", __func__, pid); //FIXME va messa sulla funzione chiamante
 		fclose(stat_file);
@@ -220,6 +224,7 @@ info** getProcessesList(int* len){
 		//Dealloca singola entry
 		free(results[i]);
 	}
+	//Dealloca array entries
 	free(results);
 
 	//Salva dimensione array processi

@@ -37,6 +37,7 @@ info* getProcessInfoByFD(const int dir_fd);
 info* getProcessInfoByPid(pid_t pid);
 
 //Crea array di info sui processi in esecuzione.
+//Le informazioni sui processi sono estratte dalla cartella /proc/
 //La dimensione dell'array viene salvata nella variabile size in input. 
 //In caso di errore la funzione ritorna NULL.
 //L'array può contenere elementi nulli.
