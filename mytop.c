@@ -52,26 +52,23 @@ void updateTreeView(){
 	gint column_num = COLUMN_CPU;
 	GtkSortType sort_type = GTK_SORT_DESCENDING;
 
-	GtkTreeModel* prev_sorted_model = gtk_tree_view_get_model(treeview);
-	if(prev_sorted_model){
-		//Se presente recupera il modello precedente
-		GtkListStore* prev_liststore =  GTK_LIST_STORE(gtk_tree_model_sort_get_model(GTK_TREE_MODEL_SORT(prev_sorted_model)));
+	GtkTreeModel* prev_model = gtk_tree_view_get_model(treeview);
+	if(prev_model){
 		//Salva l'ordinamento selezionato
-		gtk_tree_sortable_get_sort_column_id(GTK_TREE_SORTABLE(prev_sorted_model), &column_num, &sort_type);
+		gtk_tree_sortable_get_sort_column_id(GTK_TREE_SORTABLE(prev_model), &column_num, &sort_type);
 		//Rimuovi ed elimina il modello precedente
 		gtk_tree_view_set_model(treeview, NULL);
-		gtk_list_store_clear(prev_liststore);
-		g_object_unref(prev_liststore);
+		gtk_list_store_clear(GTK_LIST_STORE(prev_model));
+		g_object_unref(prev_model);
 	}
 	//Creazione nuovo modello dati
 	GtkListStore* liststore = gtk_list_store_new(COLS_NUM, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING, G_TYPE_LONG, G_TYPE_INT, G_TYPE_LONG);
 	//Carica i dati nel modello
 	loadProcessesData(liststore);
 	//Ordina i dati
-	GtkTreeModel* sorted_model = gtk_tree_model_sort_new_with_model(GTK_TREE_MODEL(liststore));
-	gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(sorted_model), column_num, sort_type);
+	gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(liststore), column_num, sort_type);
 	//Imposta il nuovo modello ordinato nella TreeView
-	gtk_tree_view_set_model(treeview, GTK_TREE_MODEL(sorted_model));
+	gtk_tree_view_set_model(treeview, GTK_TREE_MODEL(liststore));
 }
 
 //Aggiorna i dati del processo selezionato nella TreeView.
@@ -88,6 +85,7 @@ void updateRow(){
 	//Leggi dati del processo corrispondente alla riga selezionata
 	pid_t pid;
 	gtk_tree_model_get(model, &iter, COLUMN_PID, &pid, -1);
+
 	info* process = getProcessInfoByPid(pid);
 	if(!process){
 		fprintf(stderr, "%s: Errore lettura info del processo %d.\n", __func__, pid);
