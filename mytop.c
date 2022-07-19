@@ -15,6 +15,7 @@ enum columns_names{
 	COLS_NUM
 };
 
+GtkWindow *window = NULL;
 GtkTreeView *treeview = NULL; //FIXME
 
 //Ottiene la lista dei processi in esecuzione e inserisce i loro dati nella GtkListStore in input
@@ -43,7 +44,7 @@ void loadProcessesData(GtkListStore *liststore){
 void updateTreeView(){
 	if(!treeview) return;
 
-	GtkListStore* prev_liststore = (GtkListStore*) gtk_tree_view_get_model(treeview);
+	GtkListStore* prev_liststore =  GTK_LIST_STORE(gtk_tree_view_get_model(treeview));
 	gtk_tree_view_set_model(treeview, NULL); //rimuove il modello corrente
 	if(prev_liststore){
 		gtk_list_store_clear(prev_liststore); //elimina tutte le righe dal modello precedente
@@ -52,7 +53,7 @@ void updateTreeView(){
 	
 	GtkListStore* liststore = gtk_list_store_new(COLS_NUM, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING, G_TYPE_LONG, G_TYPE_INT, G_TYPE_LONG);
 	loadProcessesData(liststore);
-	gtk_tree_view_set_model(treeview, (GtkTreeModel*) liststore); //imposta il nuovo modello aggiornato
+	gtk_tree_view_set_model(treeview, GTK_TREE_MODEL(liststore)); //imposta il nuovo modello aggiornato
 	gtk_tree_view_expand_all(treeview);
 }
 
@@ -72,10 +73,10 @@ void updateRow(){
 	info* process = getProcessInfoByPid(pid);
 	if(!process){
 		fprintf(stderr, "%s: Errore lettura info del processo %d.\n", __func__, pid);
-		gtk_list_store_remove((GtkListStore*) model, &iter);
+		gtk_list_store_remove(GTK_LIST_STORE(model), &iter);
 		return;
 	}
-	gtk_list_store_set((GtkListStore*)model, &iter, COLUMN_COMMAND, process->command, COLUMN_PID, process->pid, COLUMN_STATE, getStateString(process->state), COLUMN_FLAGS, process->flags, COLUMN_CPU, process->cpu_usage, COLUMN_MEMORY, process->memory, -1);
+	gtk_list_store_set(GTK_LIST_STORE(model), &iter, COLUMN_COMMAND, process->command, COLUMN_PID, process->pid, COLUMN_STATE, getStateString(process->state), COLUMN_FLAGS, process->flags, COLUMN_CPU, process->cpu_usage, COLUMN_MEMORY, process->memory, -1);
 	info_free(process);
 }
 
@@ -99,24 +100,31 @@ pid_t getSelectedPID(){
 	return pid;
 }
 
+void showErrorDialog(char* error){
+	GtkWidget *dialog = gtk_message_dialog_new(window, GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE, "Errore");
+	gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog), error);
+	g_signal_connect(dialog, "response", G_CALLBACK(gtk_window_destroy), NULL);
+	gtk_widget_show(dialog);
+}
+
 //Costruisce la finestra e i vari elementi
 static void buildWindow(GtkApplication *app, gpointer user_data){
 	GtkBuilder *builder = gtk_builder_new_from_file(UI_FILE);
 
-	GObject *window = gtk_builder_get_object(builder, "window");
-	gtk_window_set_application(GTK_WINDOW(window), app);
+	window = GTK_WINDOW(gtk_builder_get_object(builder, "window"));
+	gtk_window_set_application(window, app);
 	
-	treeview = (GtkTreeView*) gtk_builder_get_object(builder, "treeview");
+	treeview = GTK_TREE_VIEW(gtk_builder_get_object(builder, "treeview"));
 	
-	GObject *btn_kill = gtk_builder_get_object(builder, "btn_kill");
+	GtkButton *btn_kill = GTK_BUTTON(gtk_builder_get_object(builder, "btn_kill"));
 	g_signal_connect(btn_kill, "clicked", G_CALLBACK(killProcess), NULL);
-	GObject *btn_terminate = gtk_builder_get_object(builder, "btn_terminate");
+	GtkButton *btn_terminate = GTK_BUTTON(gtk_builder_get_object(builder, "btn_terminate"));
 	g_signal_connect(btn_terminate, "clicked", G_CALLBACK(terminateProcess), NULL);
-	GObject *btn_suspend = gtk_builder_get_object(builder, "btn_suspend");
+	GtkButton *btn_suspend = GTK_BUTTON(gtk_builder_get_object(builder, "btn_suspend"));
 	g_signal_connect(btn_suspend, "clicked", G_CALLBACK(suspendProcess), NULL);
-	GObject *btn_resume = gtk_builder_get_object(builder, "btn_resume");
+	GtkButton *btn_resume = GTK_BUTTON(gtk_builder_get_object(builder, "btn_resume"));
 	g_signal_connect(btn_resume, "clicked", G_CALLBACK(resumeProcess), NULL);
-	GObject *btn_refresh = gtk_builder_get_object(builder, "btn_refresh");
+	GtkButton *btn_refresh = GTK_BUTTON(gtk_builder_get_object(builder, "btn_refresh"));
 	g_signal_connect(btn_refresh, "clicked", G_CALLBACK(updateTreeView), NULL);
 
 	updateTreeView();

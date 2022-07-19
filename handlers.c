@@ -5,9 +5,11 @@
 #include <errno.h>
 #include "handlers.h"
 
+//TODO remove
 extern pid_t getSelectedPID();
 extern void updateRow();
 extern void updateTreeView();
+extern void showErrorDialog();
 
 void sendSignal(int signal_n){
 	pid_t pid = getSelectedPID();
@@ -16,10 +18,12 @@ void sendSignal(int signal_n){
 	}
 	int ret = kill(pid, signal_n);
 	if(ret){
-		fprintf(stderr, "%s: Errore invio segnale: %s\n", __func__, strerror(errno));
+		char* errore = strerror(errno);
+		fprintf(stderr, "%s: Errore invio segnale: %s\n", __func__, errore);
+		showErrorDialog(errore);
 	}
 	#ifdef DEBUG
-		printf("Sent signal %d to pid %d.\n", signal_n, pid);
+		printf("Inviato segnale %d al processo %d.\n", signal_n, pid);
 	#endif
 	
 	updateRow();
