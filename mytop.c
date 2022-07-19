@@ -1,4 +1,5 @@
 #include <gtk/gtk.h>
+#include <sys/types.h>
 #include "process.h"
 #include "handlers.h"
 

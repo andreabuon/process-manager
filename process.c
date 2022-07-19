@@ -112,8 +112,7 @@ info* getProcessInfo(pid_t pid){
 	//Compone stringa path file stat del processo
 	char path[PATH_LEN];
 	
-	//NOTE
-	int ret = snprintf(path, PATH_LEN, "/proc/%ld/stat",(long) pid);
+	int ret = snprintf(path, PATH_LEN, "/proc/%ld/stat", (long) pid);
 	if(ret >= PATH_LEN) 
 		fprintf(stderr, "%s: Lunghezza path eccessiva -> stringa troncata.\n", __func__);
 	if(ret < 0){
@@ -175,7 +174,7 @@ info** getProcessesList(int* len){
 	//Ricava e salva le informazioni di ogni processo.
 	for(int i = 0; i<procs_n; i++){
 		errno = 0; 
-		pid_t pid = strtol(directories[i]->d_name, NULL, 10); //NOTE pid
+		pid_t pid = strtol(directories[i]->d_name, NULL, 10);
 		if(errno){
 			fprintf(stderr, "%s: Errore scansione PID del processo %s: %s\n", __func__,  directories[i]->d_name, strerror(errno));
 			processes[i] = NULL;
@@ -183,8 +182,7 @@ info** getProcessesList(int* len){
 			continue;
 		}
 		
-		//Lettura info processo
-		//NOTE in caso di errore imposta a NULL
+		//Lettura info processo (in caso di errore imposta a NULL)
 		processes[i] = getProcessInfo(pid);
 		if(!processes[i]){
 			fprintf(stderr, "%s: Errore lettura info del processo %s\n", __func__, directories[i]->d_name);
