@@ -120,6 +120,7 @@ pid_t getSelectedPID(){
 		fprintf(stderr, "%s: Nessuna riga selezionata.\n", __func__);
 		return -1;
 	}
+
 	//Leggi il valore contenuto nella riga
 	pid_t pid;
 	gtk_tree_model_get(model, &iter, COLUMN_PID, &pid, -1);
