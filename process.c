@@ -70,11 +70,9 @@ int parseProcessData(FILE* file, info* process_info){
 	*/
 	char* format_string = "%d %*[(]%m[^)]%*[)] %c %*d %*d %*d %*d %*d %u %*u %*u %*u %*u %lu %lu %*d %*d %*d %*d %*d %*d %llu %*u %ld";
 	ret = fscanf(file, format_string, &pid, &comm, &state, &flags, &utime, &stime, &starttime, &rss);
-	if(ret==EOF || ret < 8){ //FIXME
+	if(ret==EOF){ //NOTE
 		if(ret == EOF)
 			fprintf(stderr, "%s: Errore Scanf: %s\n", __func__, strerror(errno));
-		else
-			fprintf(stderr, "%s: Errore pattern matching scanf: %s\n", __func__, strerror(errno));
 		if(comm)
 			free(comm);
 		return 1;
@@ -90,7 +88,7 @@ int parseProcessData(FILE* file, info* process_info){
 	*/
 	rss = rss >> 8;
 
-	//Calcolo Percentuale Utilizzo CPU - media uso cpu su uptime //FIXME //TODO
+	//Calcolo Percentuale Utilizzo CPU - media uso cpu su uptime //FIXME
 	long unsigned uptime;
 	FILE* uptime_file = fopen("/proc/uptime", "r");
 	if(uptime_file){

@@ -17,7 +17,7 @@ enum columns_names{
 	COLS_NUM
 };
  
-//FIXME
+//FIXME Rimuovere variabili globali
 GtkWindow *window = NULL;
 GtkTreeView *treeview = NULL;
 
@@ -102,7 +102,7 @@ void updateRow(){
 	info* process = getProcessInfo(pid);
 	if(!process){
 		fprintf(stderr, "%s: Errore lettura info del processo %d.\n", __func__, pid);
-		//gtk_list_store_remove(GTK_LIST_STORE(model), &iter); //TODO
+		gtk_list_store_remove(GTK_LIST_STORE(model), &iter); //NOTE
 		return;
 	}
 	//Aggiorna i dati della riga selezionata
