@@ -87,7 +87,7 @@ void updateRow(){
 	pid_t pid;
 	gtk_tree_model_get(model, &iter, COLUMN_PID, &pid, -1);
 
-	info* process = getProcessInfoByPid(pid);
+	info* process = getProcessInfo(pid);
 	if(!process){
 		fprintf(stderr, "%s: Errore lettura info del processo %d.\n", __func__, pid);
 		gtk_list_store_remove(GTK_LIST_STORE(model), &iter); //TODO

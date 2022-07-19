@@ -11,7 +11,7 @@
 #include "process.h"
 #include "util.h"
 
-#define PATH_LEN 255
+#define PATH_LEN 22
 
 info* info_new(){
 	info* process_info = malloc(sizeof(info));
@@ -56,7 +56,6 @@ int parseProcessData(FILE* file, info* process_info){
 	long rss;	//memoria residente
 	long unsigned utime, stime;	//espresso in clock ticks
 	long long unsigned starttime;	//espresso in secondi
-	long ticks = sysconf(_SC_CLK_TCK);	//numero clock ticks al secondo
 
 	/* contenuto /proc/[pid]/stat - per altre info consultare "man 5 proc"
 	(1) %d pid -> PID del processo
@@ -75,7 +74,7 @@ int parseProcessData(FILE* file, info* process_info){
 		if(ret == EOF)
 			fprintf(stderr, "%s: Errore Scanf: %s\n", __func__, strerror(errno));
 		else
-			fprintf(stderr, "%s: Errore pattern matching: %s\n", __func__, strerror(errno));
+			fprintf(stderr, "%s: Errore pattern matching scanf: %s\n", __func__, strerror(errno));
 		if(comm)
 			free(comm);
 		return 1;
@@ -91,15 +90,17 @@ int parseProcessData(FILE* file, info* process_info){
 	*/
 	rss = rss >> 8;
 
-	//Calcolo Percentuale Utilizzo CPU - media uso cpu su uptime //FIXME
+	//Calcolo Percentuale Utilizzo CPU - media uso cpu su uptime //FIXME //TODO
 	long unsigned uptime;
 	FILE* uptime_file = fopen("/proc/uptime", "r");
 	if(uptime_file){
 		ret = fscanf(uptime_file, "%lu", &uptime);
 		if(ret == EOF)
 			fprintf(stderr, "%s: Errore Scanf Uptime: %s\n", __func__, strerror(errno));
-		else
+		else{
+			long ticks = sysconf(_SC_CLK_TCK);	//numero clock ticks al secondo
 			cpu_usage = 100 * ((utime + stime) / ticks ) / uptime;
+		}
 		fclose(uptime_file);
 	}
 
@@ -107,44 +108,23 @@ int parseProcessData(FILE* file, info* process_info){
 	return 0;
 }
 
-info* getProcessInfoByFD(const int dir_fd){
-	//Apertura file "stat" nella directory dir_fd (in input). dir_fd = "/proc/[pid]"
-	int stat_fd = openat(dir_fd, "stat", O_RDONLY);
-	if(stat_fd == -1){
-		fprintf(stderr, "%s: Errore Openat: %s\n", __func__, strerror(errno));
-		return NULL;
-	}
-	FILE* stat_file = fdopen(stat_fd, "r");
-	if(!stat_file){
-		fprintf(stderr, "%s: Errore fdopen: %s\n", __func__, strerror(errno));
-		close(stat_fd);
-		return NULL;
-	}
-	
-	//Parsing e salvataggio dei dati del processo
-	info* process_info = info_new();
-	if(!process_info){
-		fclose(stat_file);
-		close(stat_fd);
-		return NULL;
-	}
-	int ret = parseProcessData(stat_file, process_info);
-	if(ret){
-		info_free(process_info);
-		fclose(stat_file);
-		close(stat_fd);
-		return NULL;
-	}
-
-	fclose(stat_file);
-	close(stat_fd);
-	return process_info;
-}
-
-info* getProcessInfoByPid(pid_t pid){
+info* getProcessInfo(pid_t pid){
 	//Compone stringa path file stat del processo
 	char path[PATH_LEN];
-	snprintf(path, PATH_LEN, "/proc/%d/stat", pid);
+	
+	/* //NOTE
+	if(sizeof(pid_t) == sizeof(int))
+		snprintf(path, PATH_LEN, "/proc/%d/stat", pid);
+	else
+		snprintf(path, PATH_LEN, "/proc/%ld/stat", pid);
+	*/
+	int ret = snprintf(path, PATH_LEN, "/proc/%d/stat", pid);
+	if(ret >= PATH_LEN) 
+		fprintf(stderr, "%s: Lunghezza path eccessiva -> stringa troncata.\n", __func__);
+	if(ret < 0){
+		fprintf(stderr, "%s: Errore composizione stringa path.\n", __func__);
+		return NULL;
+	}
 
 	//Apertura file stat
 	FILE* stat_file = fopen(path, "r");
@@ -159,11 +139,12 @@ info* getProcessInfoByPid(pid_t pid){
 		fclose(stat_file);
 		return NULL;
 	}
-	int ret = parseProcessData(stat_file, process_info);
+
+	ret = parseProcessData(stat_file, process_info);
 	if(ret){
 		fprintf(stderr, "%s: Errore parsing dati processo %d.\n", __func__, pid);
-		fclose(stat_file);
 		info_free(process_info);
+		fclose(stat_file);
 		return NULL;
 	}
 
@@ -177,19 +158,11 @@ int filter(const struct dirent* dir){
 }
 
 info** getProcessesList(int* len){
-	//Apertura directory /proc/
-	int proc_fd = open("/proc/", O_RDONLY | O_DIRECTORY);
-	if(proc_fd == -1){
-		fprintf(stderr, "%s: Errore apertura directory /proc/: %s\n", __func__, strerror(errno));
-		return NULL;
-	}
-
-	//Filtra le directory relative a processi.
-	struct dirent** results;
-	int procs_n = scandirat(proc_fd, ".", &results, &filter, NULL);
+	//Scansiona la directory /proc/ e filtra le directory relative a processi.
+	struct dirent** directories;
+	int procs_n = scandir("/proc/", &directories, &filter, NULL);
 	if (procs_n == -1){
 		fprintf(stderr, "%s: Errore scansione directory /proc/: %s\n", __func__, strerror(errno));
-		close(proc_fd);
 		return NULL;
 	}
 
@@ -199,38 +172,41 @@ info** getProcessesList(int* len){
 		fprintf(stderr, "%s: Errore allocazione array processi: %s\n", __func__, strerror(errno));
 		//Dealloca array dirent
 		for(int i = 0 ; i<procs_n; i++)
-			free(results[i]);
-		free(results);
-		close(proc_fd);
+			free(directories[i]);
+		free(directories);
 		return NULL;
 	}
 
 	//Ricava e salva le informazioni di ogni processo.
 	for(int i = 0; i<procs_n; i++){
-		int pid_fd = openat(proc_fd, results[i]->d_name, O_RDONLY | O_DIRECTORY);
-		if(pid_fd == -1){
-			fprintf(stderr, "%s: Errore Openat processo %d: %s\n", __func__, i, strerror(errno));
+		errno = 0;
+		pid_t pid = strtol(directories[i]->d_name, NULL, 10); //NOTE cast!
+		if(errno){
+			fprintf(stderr, "%s: Errore scansione PID del processo %s: %s\n", __func__,  directories[i]->d_name, strerror(errno));
 			processes[i] = NULL;
+			free(directories[i]);
 			continue;
 		}
 		
 		//Lettura info processo
 		//NOTE in caso di errore imposta a NULL
-		processes[i] = getProcessInfoByFD(pid_fd);
-		if(!processes[i])
-			fprintf(stderr, "%s: Errore lettura info del processo %s\n", __func__, results[i]->d_name);
+		processes[i] = getProcessInfo(pid);
+		if(!processes[i]){
+			fprintf(stderr, "%s: Errore lettura info del processo %s\n", __func__, directories[i]->d_name);
+			free(directories[i]);
+			continue;
+		}
 		
-		close(pid_fd);
 		//Dealloca singola entry
-		free(results[i]);
+		free(directories[i]);
 	}
+	
 	//Dealloca array entries
-	free(results);
+	free(directories);
 
-	//Salva dimensione array processi
+	//Salva dimensione array
 	*len = procs_n;
 
-	close(proc_fd);
 	return processes;
 }
 
