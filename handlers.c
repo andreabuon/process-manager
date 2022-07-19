@@ -16,16 +16,17 @@ void sendSignal(int signal_n){
 	if(pid<0){
 		return;
 	}
+	
 	int ret = kill(pid, signal_n);
 	if(ret){
 		char* errore = strerror(errno);
 		fprintf(stderr, "%s: Errore invio segnale: %s\n", __func__, errore);
 		showErrorDialog(errore);
 	}
+	
 	#ifdef DEBUG
 		printf("Inviato segnale %d al processo %d.\n", signal_n, pid);
 	#endif
-	
 	updateRow();
 }
 

@@ -48,6 +48,7 @@ void loadProcessesData(GtkListStore *liststore){
 //Carica/aggiorna i dati nella TreeView mantenendo l'ordinamento selezionato.
 void updateTreeView(){
 	if(!treeview) return;
+
 	//Ordinamento di default
 	gint column_num = COLUMN_CPU;
 	GtkSortType sort_type = GTK_SORT_DESCENDING;
@@ -63,7 +64,6 @@ void updateTreeView(){
 	}
 	//Creazione nuovo modello dati
 	GtkListStore* liststore = gtk_list_store_new(COLS_NUM, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING, G_TYPE_LONG, G_TYPE_INT, G_TYPE_LONG);
-	//Carica i dati nel modello
 	loadProcessesData(liststore);
 	//Ordina i dati
 	gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(liststore), column_num, sort_type);
@@ -80,6 +80,7 @@ void updateRow(){
 	gboolean res = gtk_tree_selection_get_selected(treeSelection, &model, &iter);
 	if(!res){
 		fprintf(stderr, "%s: Nessuna riga selezionata.\n", __func__);
+		return;
 	}
 
 	//Leggi dati del processo corrispondente alla riga selezionata

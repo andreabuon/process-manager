@@ -42,6 +42,8 @@ void info_print(const info* process_info){
 	printf("%d %s %c %d %ld\n", process_info->pid, process_info->command, process_info->state, process_info->cpu_usage, process_info->memory);
 }
 
+/*****/
+
 //Esegue il parsing dei dati del processo dal file e li salva nella struttura process_info. Ritorna 0 in caso di successo e 1 in caso di errore.
 int parseProcessData(FILE* file, info* process_info){
 	int ret;
@@ -118,6 +120,7 @@ info* getProcessInfoByFD(const int dir_fd){
 		close(stat_fd);
 		return NULL;
 	}
+	
 	//Parsing e salvataggio dei dati del processo
 	info* process_info = info_new();
 	if(!process_info){
@@ -125,7 +128,6 @@ info* getProcessInfoByFD(const int dir_fd){
 		close(stat_fd);
 		return NULL;
 	}
-
 	int ret = parseProcessData(stat_file, process_info);
 	if(ret){
 		info_free(process_info);
@@ -144,23 +146,22 @@ info* getProcessInfoByPid(pid_t pid){
 	char path[PATH_LEN];
 	snprintf(path, PATH_LEN, "/proc/%d/stat", pid);
 
-	info* process_info = info_new();
-	if(!process_info){
-		return NULL;
-	}
-
 	//Apertura file stat
 	FILE* stat_file = fopen(path, "r");
 	if(!stat_file){
 		fprintf(stderr, "%s: Errore apertura file /proc/%d/stat: %s\n", __func__, pid, strerror(errno));
-		info_free(process_info);
 		return NULL;
 	}
 	
 	//Parsing e salvataggio dei dati del processo
+	info* process_info = info_new();
+	if(!process_info){
+		fclose(stat_file);
+		return NULL;
+	}
 	int ret = parseProcessData(stat_file, process_info);
 	if(ret){
-		fprintf(stderr, "%s: Errore parsing dati processo %d.\n", __func__, pid); //FIXME va messa sulla funzione chiamante
+		fprintf(stderr, "%s: Errore parsing dati processo %d.\n", __func__, pid);
 		fclose(stat_file);
 		info_free(process_info);
 		return NULL;
