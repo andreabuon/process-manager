@@ -14,7 +14,7 @@
 info* info_new(){
 	info* process_info = malloc(sizeof(info));
 	if(!process_info){
-		perror("info_new: Errore allocazione info");
+		fprintf(stderr, "%s: Errore allocazione info: %s\n", __func__, strerror(errno));
 		return NULL;
 	}
 	process_info->command = NULL;
@@ -69,14 +69,11 @@ int parseData(FILE* file, info* process_info){
 	ret = fscanf(file, format_string, &pid, &comm, &state, &flags, &utime, &stime, &starttime, &rss);
 	if(ret==EOF || ret < 7){
 		if(ret == EOF)
-			perror("parseData: Errore fscanf");
+			fprintf(stderr, "%s: Errore Scanf: %s\n", __func__, strerror(errno));
 		else
-			fprintf(stderr, "parseData: Errore matching\n");
-		fprintf(stderr, "parseData: Errore lettura info del processo");
-		if(pid)
-			fprintf(stderr, " [%d]", pid);
-		fprintf(stderr, "\n");
-		if(comm) free(comm);
+			fprintf(stderr, "%s: Errore pattern matching: %s\n", __func__, strerror(errno));
+		if(comm)
+			free(comm);
 		return 1;
 	}
 
@@ -95,7 +92,7 @@ int parseData(FILE* file, info* process_info){
 	if(uptime_file){
 		ret = fscanf(uptime_file, "%lu", &uptime);
 		if(ret == EOF)
-			fprintf(stderr, "parseData: Errore Scanf Uptime");
+			fprintf(stderr, "%s: Errore Scanf Uptime: %s\n", __func__, strerror(errno));
 		else
 			cpu_usage = 100 * ((utime + stime) / ticks ) / uptime;
 		fclose(uptime_file);
@@ -110,13 +107,13 @@ info* getProcessInfoByFD(const int dir_fd){
 	//Apertura file "stat" nella directory dir_fd (in input). dir_fd = /proc/[pid]
 	int stat_fd = openat(dir_fd, "stat", O_RDONLY);
 	if(stat_fd == -1){
-		perror("getProcessInfo: Errore openat");
+		fprintf(stderr, "%s: Errore Openat: %s\n", __func__, strerror(errno));
 		return NULL;
 	}
 
 	FILE* stat_file = fdopen(stat_fd, "r");
 	if(!stat_file){
-		perror("getProcessInfo: Errore fdopen");
+		fprintf(stderr, "%s: Errore fdopen: %s\n", __func__, strerror(errno));
 		close(stat_fd);
 		return NULL;
 	}
@@ -153,11 +150,14 @@ info* getProcessInfoByPid(pid_t pid){
 
 	FILE* stat_file = fopen(path, "r");
 	if(!stat_file){
+		fprintf(stderr, "%s: Errore apertura file /proc/%d/stat: %s\n", __func__, pid, strerror(errno));
 		info_free(process_info);
 		return NULL;
 	}
+	
 	int ret = parseData(stat_file, process_info);
 	if(ret){
+		fprintf(stderr, "%s: Errore parsing dati processo %d.\n", __func__, pid); //FIXME va messa sulla funzione chiamante
 		fclose(stat_file);
 		info_free(process_info);
 		return NULL;
@@ -176,7 +176,7 @@ info** getProcessesList(int* len){
 	//Apertura directory /proc/
 	int proc_fd = open("/proc/", O_RDONLY | O_DIRECTORY);
 	if(proc_fd == -1){
-		perror("GetProcessesList: Errore apertura directory /proc/");
+		fprintf(stderr, "%s: Errore apertura directory /proc/: %s\n", __func__, strerror(errno));
 		return NULL;
 	}
 
@@ -184,7 +184,7 @@ info** getProcessesList(int* len){
 	struct dirent** results;
 	int procs_n = scandirat(proc_fd, ".", &results, &filter, NULL);
 	if (procs_n == -1){
-        perror("GetProcessesList: Errore lettura directory /proc/");
+		fprintf(stderr, "%s: Errore lettura directory /proc/: %s\n", __func__, strerror(errno));
 		close(proc_fd);
 		return NULL;
 	}
@@ -192,7 +192,7 @@ info** getProcessesList(int* len){
 	//Creazione array per salvare info processi
 	info** processes = malloc(procs_n * sizeof(info*));
 	if(!processes){
-		perror("GetProcessesList: Errore allocazione array processi");
+		fprintf(stderr, "%s: Errore allocazione array processi: %s\n", __func__, strerror(errno));
 		//Dealloca array dirent
 		for(int i = 0 ; i<procs_n; i++)
 			free(results[i]);
@@ -205,14 +205,16 @@ info** getProcessesList(int* len){
 	for(int i = 0; i<procs_n; i++){
 		int pid_fd = openat(proc_fd, results[i]->d_name, O_RDONLY | O_DIRECTORY);
 		if(pid_fd == -1){
-			fprintf(stderr, "GetProcessesList: Errore Openat processo %d: %s\n", i, strerror(errno));
+			fprintf(stderr, "%s: Errore Openat processo %d: %s\n", __func__, i, strerror(errno));
 			processes[i] = NULL;
 			continue;
 		}
 		
 		//Lettura info processo
 		//NOTE in caso di errore imposta a NULL
-		processes[i] = getProcessInfoByFD(pid_fd); 
+		processes[i] = getProcessInfoByFD(pid_fd);
+		if(!processes[i])
+			fprintf(stderr, "%s: Errore lettura info del processo %s\n", __func__, results[i]->d_name);
 		
 		close(pid_fd);
 		//Dealloca singola entry

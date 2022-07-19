@@ -22,7 +22,7 @@ void loadProcessesData(GtkListStore *liststore){
 	int size;
 	info** processList = getProcessesList(&size);
 	if(!processList){
-		fprintf(stderr, "loadProcesses: Errore caricamento lista processi.\n");
+		fprintf(stderr, "%s:  Errore caricamento lista processi.\n", __func__);
 		return;
 	}
 
@@ -63,7 +63,7 @@ void updateRow(){
 	GtkTreeIter iter;
 	gboolean res = gtk_tree_selection_get_selected(treeSelection, &model, &iter);
 	if(!res){
-		fprintf(stderr, "updateRow: Nessuna riga selezionata.\n");
+		fprintf(stderr, "%s: Nessuna riga selezionata.\n", __func__);
 	}
 
 	pid_t pid;
@@ -71,6 +71,7 @@ void updateRow(){
 
 	info* process = getProcessInfoByPid(pid);
 	if(!process){
+		fprintf(stderr, "%s: Errore lettura info del processo %d.\n", __func__, pid);
 		gtk_list_store_remove((GtkListStore*) model, &iter);
 		return;
 	}
@@ -85,7 +86,7 @@ pid_t getSelectedPID(){
 	GtkTreeIter iter;
 	gboolean res = gtk_tree_selection_get_selected(treeSelection, &model, &iter);
 	if(!res){
-		fprintf(stderr, "getSelectedProcessPID: Nessuna riga selezionata.\n");
+		fprintf(stderr, "%s: Nessuna riga selezionata.\n", __func__);
 		return -1;
 	}
 

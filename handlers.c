@@ -1,6 +1,8 @@
 #include <sys/types.h>
 #include <signal.h>
 #include <stdio.h>
+#include <string.h>
+#include <errno.h>
 #include "handlers.h"
 
 extern pid_t getSelectedPID();
@@ -14,7 +16,7 @@ void sendSignal(int signal_n){
 	}
 	int ret = kill(pid, signal_n);
 	if(ret){
-		perror("sendSignal: Errore invio segnale");
+		fprintf(stderr, "%s: Errore invio segnale: %s\n", __func__, strerror(errno));
 	}
 	#ifdef DEBUG
 		printf("Sent signal %d to pid %d.\n", signal_n, pid);
