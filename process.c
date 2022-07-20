@@ -1,5 +1,4 @@
 #define _GNU_SOURCE 
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -8,10 +7,11 @@
 #include <sys/types.h>
 #include <string.h>
 #include <errno.h>
+#include <limits.h>
 #include "process.h"
 #include "util.h"
 
-#define PATH_LEN 22
+#define PATH_LEN 32
 
 info* info_new(){
 	info* process_info = malloc(sizeof(info));
@@ -109,12 +109,12 @@ int parseProcessData(FILE* file, info* process_info){
 info* getProcessInfo(pid_t pid){
 	//Compone stringa path file stat del processo
 	char path[PATH_LEN];
-	
-	int ret = snprintf(path, PATH_LEN, "/proc/%ld/stat", (long) pid);
-	if(ret >= PATH_LEN) 
-		fprintf(stderr, "%s: Lunghezza path eccessiva -> stringa troncata.\n", __func__);
-	if(ret < 0){
+	int ret = snprintf(path, PATH_LEN, "/proc/%d/stat", pid);
+	if(ret < 0 || ret >= PATH_LEN){
 		fprintf(stderr, "%s: Errore composizione stringa path.\n", __func__);
+		if(ret >= PATH_LEN){
+			fprintf(stderr, "Errore %s: Stringa path troppo lunga.\n", __func__);
+		}
 		return NULL;
 	}
 
@@ -172,14 +172,15 @@ info** getProcessesList(int* len){
 	//Ricava e salva le informazioni di ogni processo.
 	for(int i = 0; i<procs_n; i++){
 		errno = 0; 
-		pid_t pid = strtol(directories[i]->d_name, NULL, 10);
-		if(errno){
+		long pid_long = strtol(directories[i]->d_name, NULL, 10); //FIXME cast
+		if(errno || pid_long > INT_MAX || pid_long < INT_MIN){
 			fprintf(stderr, "%s: Errore scansione PID del processo %s: %s\n", __func__,  directories[i]->d_name, strerror(errno));
 			processes[i] = NULL;
 			free(directories[i]);
 			continue;
 		}
-		
+		pid_t pid = (pid_t) pid_long; //NOTE
+
 		//Lettura info processo (in caso di errore imposta a NULL)
 		processes[i] = getProcessInfo(pid);
 		if(!processes[i]){
