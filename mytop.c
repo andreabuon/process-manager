@@ -59,23 +59,22 @@ void loadProcessesData(GtkListStore *liststore){
 //Carica/aggiorna i dati nella TreeView mantenendo l'ordinamento selezionato.
 void updateTreeView(){
 	if(!treeview) return;
-
+	
 	//Ordinamento di default
 	gint column_num = COLUMN_CPU;
 	GtkSortType sort_type = GTK_SORT_DESCENDING;
 
-	GtkTreeModel* prev_model = gtk_tree_view_get_model(treeview);
-	if(prev_model){
+	GtkTreeModel *model =  gtk_tree_view_get_model(GTK_TREE_VIEW(treeview));
+	GtkListStore* liststore = GTK_LIST_STORE(model);
+	if(liststore){
 		//Salva l'ordinamento selezionato
-		gtk_tree_sortable_get_sort_column_id(GTK_TREE_SORTABLE(prev_model), &column_num, &sort_type);
-		//Rimuovi ed elimina il modello precedente
+		gtk_tree_sortable_get_sort_column_id(GTK_TREE_SORTABLE(liststore), &column_num, &sort_type);
+		//Rimuovi dati dal modello precedente
 		gtk_tree_view_set_model(treeview, NULL);
-		gtk_list_store_clear(GTK_LIST_STORE(prev_model));
-		g_object_unref(prev_model);
-	}
-
-	//Creazione nuovo modello dati
-	GType tipi_colonne[COLS_NUM] = {
+		gtk_list_store_clear(liststore);
+	}else{
+		//Crea nuovo modello dati
+		GType tipi_colonne[COLS_NUM] = {
 									G_TYPE_STRING, //command
 									G_TYPE_INT, //pid
 									G_TYPE_STRING, //state
@@ -83,10 +82,15 @@ void updateTreeView(){
 									G_TYPE_INT, //cpu
 									G_TYPE_LONG //memory
 									};
-	GtkListStore* liststore = gtk_list_store_newv(COLS_NUM, tipi_colonne);
+		liststore = gtk_list_store_newv(COLS_NUM, tipi_colonne);
+	}
+
+	//Carica i dati dei processi
 	loadProcessesData(liststore);
+
 	//Ordina i dati
 	gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(liststore), column_num, sort_type);
+
 	//Imposta il nuovo modello ordinato nella TreeView
 	gtk_tree_view_set_model(treeview, GTK_TREE_MODEL(liststore));
 }
@@ -149,6 +153,7 @@ static void buildWindow(GtkApplication *app, gpointer user_data){
 	gtk_window_set_application(GTK_WINDOW(window), app);
 	
 	treeview = GTK_TREE_VIEW(gtk_builder_get_object(builder, "treeview"));
+	gtk_tree_view_set_model(treeview, NULL);
 	
 	//Assegna funzioni ai pulsanti
 	GObject *btn_kill = gtk_builder_get_object(builder, "btn_kill");
