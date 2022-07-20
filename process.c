@@ -172,7 +172,7 @@ info** getProcessesList(int* len){
 	//Ricava e salva le informazioni di ogni processo.
 	for(int i = 0; i<procs_n; i++){
 		errno = 0; 
-		long pid_long = strtol(directories[i]->d_name, NULL, 10); //FIXME cast
+		long pid_long = strtol(directories[i]->d_name, NULL, 10); //NOTE
 		if(errno || pid_long > INT_MAX || pid_long < INT_MIN){
 			fprintf(stderr, "%s: Errore scansione PID del processo %s: %s\n", __func__,  directories[i]->d_name, strerror(errno));
 			processes[i] = NULL;

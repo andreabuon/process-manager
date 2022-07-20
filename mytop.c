@@ -17,17 +17,9 @@ enum columns_names{
 	COLS_NUM
 };
  
-//FIXME Rimuovere variabili globali
-GtkWindow *window = NULL;
-GtkTreeView *treeview = NULL;
-
-//Visualizza una finestra di dialogo con una descrizione dell'errore.
-void showErrorDialog(char* error){
-	GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(window), GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE, "Errore");
-	gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog), error);
-	g_signal_connect(dialog, "response", G_CALLBACK(gtk_window_destroy), NULL);
-	gtk_widget_show(dialog);
-}
+//NOTE
+static GtkWindow *window = NULL;
+static GtkTreeView *treeview = NULL;
 
 //Ottiene la lista dei processi in esecuzione e inserisce i loro dati nella GtkListStore in input
 void loadProcessesData(GtkListStore *liststore){
@@ -95,56 +87,6 @@ void updateTreeView(){
 	gtk_tree_view_set_model(treeview, GTK_TREE_MODEL(liststore));
 }
 
-//Aggiorna i dati del processo selezionato nella TreeView.
-void updateRow(){
-	//Salva riferimento alla riga selezionata
-	GtkTreeSelection* treeSelection = gtk_tree_view_get_selection(treeview);
-	GtkTreeModel* model;
-	GtkTreeIter iter;
-	gboolean res = gtk_tree_selection_get_selected(treeSelection, &model, &iter);
-	if(!res){
-		fprintf(stderr, "%s: Nessuna riga selezionata.\n", __func__);
-		return;
-	}
-
-	//Leggi dati del processo corrispondente alla riga selezionata
-	pid_t pid;
-	gtk_tree_model_get(model, &iter, COLUMN_PID, &pid, -1);
-
-	info* process = getProcessInfo(pid);
-	if(!process){
-		fprintf(stderr, "%s: Errore lettura info del processo %d.\n", __func__, pid);
-		gtk_list_store_remove(GTK_LIST_STORE(model), &iter); //NOTE
-		return;
-	}
-	//Aggiorna i dati della riga selezionata
-	gtk_list_store_set(GTK_LIST_STORE(model), &iter, COLUMN_COMMAND, process->command, COLUMN_PID, process->pid, COLUMN_STATE, getStateString(process->state), COLUMN_FLAGS, process->flags, COLUMN_CPU, process->cpu_usage, COLUMN_MEMORY, process->memory, -1);
-	//Elimina i dati del processo
-	info_free(process);
-}
-
-//Ritorna il pid del processo selezionato nella TreeView. Ritorna -1 se nessuna riga è stata selezionata.
-pid_t getSelectedPID(){
-	//Salva riferimento alla riga selezionata
-	GtkTreeSelection* treeSelection = gtk_tree_view_get_selection(treeview);
-	GtkTreeModel* model;
-	GtkTreeIter iter;
-	gboolean res = gtk_tree_selection_get_selected(treeSelection, &model, &iter);
-	if(!res){
-		fprintf(stderr, "%s: Nessuna riga selezionata.\n", __func__);
-		return -1;
-	}
-
-	//Leggi il valore contenuto nella riga
-	pid_t pid;
-	gtk_tree_model_get(model, &iter, COLUMN_PID, &pid, -1);
-	
-	#ifdef DEBUG
-		printf("Selezionato processo %d.\n", pid);
-	#endif
-	return pid;
-}
-
 //Costruisce la finestra e i vari elementi. Legge la descrizione dell'interfaccia grafica da file.
 static void buildWindow(GtkApplication *app, gpointer user_data){
 	GtkBuilder *builder = gtk_builder_new_from_file(UI_FILE);
@@ -183,4 +125,62 @@ int main(int argc, char *argv[]){
 
 	g_object_unref(app);
 	return status;
+}
+
+
+/***/
+
+void showErrorDialog(char* error){
+	GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(window), GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE, "Errore");
+	gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog), error);
+	g_signal_connect(dialog, "response", G_CALLBACK(gtk_window_destroy), NULL);
+	gtk_widget_show(dialog);
+}
+
+pid_t getSelectedPID(){
+	//Salva riferimento alla riga selezionata
+	GtkTreeSelection* treeSelection = gtk_tree_view_get_selection(treeview);
+	GtkTreeModel* model;
+	GtkTreeIter iter;
+	gboolean res = gtk_tree_selection_get_selected(treeSelection, &model, &iter);
+	if(!res){
+		fprintf(stderr, "%s: Nessuna riga selezionata.\n", __func__);
+		return -1;
+	}
+
+	//Leggi il valore contenuto nella riga
+	pid_t pid;
+	gtk_tree_model_get(model, &iter, COLUMN_PID, &pid, -1);
+	
+	#ifdef DEBUG
+		printf("Selezionato processo %d.\n", pid);
+	#endif
+	return pid;
+}
+
+void updateRow(){
+	//Salva riferimento alla riga selezionata
+	GtkTreeSelection* treeSelection = gtk_tree_view_get_selection(treeview);
+	GtkTreeModel* model;
+	GtkTreeIter iter;
+	gboolean res = gtk_tree_selection_get_selected(treeSelection, &model, &iter);
+	if(!res){
+		fprintf(stderr, "%s: Nessuna riga selezionata.\n", __func__);
+		return;
+	}
+
+	//Leggi dati del processo corrispondente alla riga selezionata
+	pid_t pid;
+	gtk_tree_model_get(model, &iter, COLUMN_PID, &pid, -1);
+
+	info* process = getProcessInfo(pid);
+	if(!process){
+		fprintf(stderr, "%s: Errore lettura info del processo %d.\n", __func__, pid);
+		gtk_list_store_remove(GTK_LIST_STORE(model), &iter); //NOTE
+		return;
+	}
+	//Aggiorna i dati della riga selezionata
+	gtk_list_store_set(GTK_LIST_STORE(model), &iter, COLUMN_COMMAND, process->command, COLUMN_PID, process->pid, COLUMN_STATE, getStateString(process->state), COLUMN_FLAGS, process->flags, COLUMN_CPU, process->cpu_usage, COLUMN_MEMORY, process->memory, -1);
+	//Elimina i dati del processo
+	info_free(process);
 }
