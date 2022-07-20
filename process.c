@@ -71,8 +71,7 @@ int parseProcessData(FILE* file, info* process_info){
 	char* format_string = "%d %*[(]%m[^)]%*[)] %c %*d %*d %*d %*d %*d %u %*u %*u %*u %*u %lu %lu %*d %*d %*d %*d %*d %*d %llu %*u %ld";
 	ret = fscanf(file, format_string, &pid, &comm, &state, &flags, &utime, &stime, &starttime, &rss);
 	if(ret==EOF){ //NOTE
-		if(ret == EOF)
-			fprintf(stderr, "%s: Errore Scanf: %s\n", __func__, strerror(errno));
+		fprintf(stderr, "%s: Errore Scanf: %s\n", __func__, strerror(errno));
 		if(comm)
 			free(comm);
 		return 1;
