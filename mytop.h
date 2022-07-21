@@ -7,10 +7,7 @@
 //Visualizza una finestra con il messaggio di errore passato.
 void showErrorDialog(char* error);
 
-//Ritorna il pid del processo selezionato nella TreeView. Ritorna -1 se nessuna riga è stata selezionata.
-pid_t getSelectedPID();
-
-//Aggiorna i dati del processo selezionato nella TreeView.
-void updateRow();
+//Invia il segnale signal_n al processo selezionato nella TreeView. Infine aggiorna i dati della riga corrispondente.
+void sendSignal(int signal_n);
 
 #endif //MYTOP_H
