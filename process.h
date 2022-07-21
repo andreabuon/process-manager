@@ -35,7 +35,6 @@ void info_print(const info* process_info);
 info* getProcessInfo(pid_t pid);
 
 //Crea array di info sui processi in esecuzione.
-//Le informazioni sui processi vengono estratte dalla cartella /proc/
 //La dimensione dell'array viene salvata nella variabile size in input. 
 //In caso di errore la funzione ritorna NULL.
 //L'array può contenere elementi nulli.

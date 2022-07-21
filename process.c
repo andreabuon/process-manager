@@ -8,6 +8,7 @@
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
+#include <pthread.h>
 #include "process.h"
 #include "util.h"
 
@@ -148,6 +149,26 @@ int filter(const struct dirent* dir){
 	return dir->d_type == DT_DIR && isNumeric(dir->d_name);
 }
 
+void* funzioneThread(void* arg){
+	char* stringa = arg;
+	//Conversione nome directory in pid
+	errno = 0; 
+	long pid_long = strtol(stringa, NULL, 10); //NOTE
+	if(errno || pid_long > INT_MAX || pid_long < INT_MIN){
+		fprintf(stderr, "%s: Errore scansione PID del processo %s: %s\n", __func__,  stringa, strerror(errno));
+		return NULL;
+	}
+	pid_t pid = pid_long; //NOTE
+
+	//Lettura info processo (in caso di errore imposta a NULL)
+	info* process = getProcessInfo(pid);
+	if(!process){
+		fprintf(stderr, "%s: Errore lettura info del processo %s\n", __func__, stringa);
+		return NULL;
+	}
+	return process;
+}
+
 info** getProcessesList(int* len){
 	//Scansiona la directory /proc/ e filtra le directory relative a processi.
 	struct dirent** directories;
@@ -169,29 +190,38 @@ info** getProcessesList(int* len){
 	}
 
 	//Ricava e salva le informazioni di ogni processo.
-	for(int i = 0; i<procs_n; i++){
-		errno = 0; 
-		long pid_long = strtol(directories[i]->d_name, NULL, 10); //NOTE
-		if(errno || pid_long > INT_MAX || pid_long < INT_MIN){
-			fprintf(stderr, "%s: Errore scansione PID del processo %s: %s\n", __func__,  directories[i]->d_name, strerror(errno));
-			processes[i] = NULL;
+	//Crea un nuovo thread per ogni processo.
+	pthread_t* threads = calloc(procs_n, sizeof(pthread_t));
+	if(!threads){
+		fprintf(stderr, "%s: Errore allocazione threads: %s\n", __func__, strerror(errno));
+		//Dealloca array dirent
+		for(int i = 0 ; i<procs_n; i++)
 			free(directories[i]);
-			continue;
-		}
-		pid_t pid = (pid_t) pid_long; //NOTE
+		free(directories);
+		return NULL;
+	}
 
-		//Lettura info processo (in caso di errore imposta a NULL)
-		processes[i] = getProcessInfo(pid);
-		if(!processes[i]){
-			fprintf(stderr, "%s: Errore lettura info del processo %s\n", __func__, directories[i]->d_name);
-			free(directories[i]);
-			continue;
+	for(int i = 0; i<procs_n; i++){
+		int ret = pthread_create(&threads[i], NULL, funzioneThread, directories[i]->d_name);		
+		if(ret){
+			fprintf(stderr, "%s: Errore creazione thread %d\n", __func__, i);
+			//TODO error handling
 		}
-		
+	}
+	//Join
+	for(int i = 0; i<procs_n; i++){
+		if(threads[i]){
+			int ret = pthread_join(threads[i], (void**) &processes[i]);
+			if(ret){
+				fprintf(stderr, "%s: Errore join thread %d\n", __func__, i);
+			}
+		}else{
+			processes[i] = NULL;
+		}
 		//Dealloca singola entry
 		free(directories[i]);
 	}
-	
+	free(threads);
 	//Dealloca array entries
 	free(directories);
 
