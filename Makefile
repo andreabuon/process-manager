@@ -2,6 +2,9 @@ FLAGS=-Wall -g -DDEBUG
 
 all: mytop
 
+valgrind: mytop
+	valgrind ./mytop --leak-check=full
+
 mytop: mytop.o process.o handlers.o util.o
 	gcc $(FLAGS) -o mytop *.o `pkg-config --libs gtk4`
 
@@ -20,4 +23,4 @@ util.o: util.c util.h
 clean:
 	rm mytop *.o
 
-.phony: clean all
+.phony: clean all valgrind
