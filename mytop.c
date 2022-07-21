@@ -131,7 +131,6 @@ int main(int argc, char *argv[]){
 
 /***/
 
-
 void showErrorDialog(char* error){
 	GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(window), GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE, "Errore");
 	gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog), error);

@@ -45,7 +45,40 @@ void info_print(const info* process_info){
 
 /*****/
 
-//Esegue il parsing dei dati del processo dal file e li salva nella struttura process_info. Ritorna 0 in caso di successo e 1 in caso di errore.
+//Dato un carattere che rappresenta lo stato di un processo ne restituisce una breve descrizione. Esempio: 'S' -> "Sleeping"
+char* getStateString(char s){
+	switch(s){
+		case 'R':
+			return "Running";
+		case 'S':
+			return "Sleeping";
+		case 'D':
+			return "Waiting";
+		case 'Z':
+			return "Zombie";
+		case 'T':
+			return "Stopped";
+		case 't':
+			return "Stopped";
+		case 'X':
+			return "Dead";
+		case 'x':
+			return "Dead";
+		case 'K':
+			return "Wavekill";
+		case 'W':
+			return "Waking";
+		case 'P':
+			return "Parking";
+		//
+		case 'I':
+			return "Idle";
+		default:
+			return "Unknown";
+	}
+}
+
+//Esegue il parsing dei dati del processo dal file 'file' e li salva nella struttura 'process_info'. Ritorna 0 in caso di successo e 1 in caso di errore.
 int parseProcessData(FILE* file, info* process_info){
 	int ret;
 
@@ -106,6 +139,9 @@ int parseProcessData(FILE* file, info* process_info){
 	return 0;
 }
 
+//Funzione che prende come input il PID di un processo e ritorna una struttura 'info' con tutte le informazioni del processo.
+//Le informazioni vengono estratte dal file "stat" contenuto nella directory /proc/[pid]/stat.
+//In caso di errore la funzione ritorna NULL.
 info* getProcessInfo(pid_t pid){
 	//Compone stringa path file stat del processo
 	char path[PATH_LEN];
@@ -144,13 +180,12 @@ info* getProcessInfo(pid_t pid){
 	return process_info;
 }
 
-int filter(const struct dirent* dir){
-	//Seleziona solo le entry relative a processi, ovvero directory che hanno come nome un numero (il PID del processo).
-	return dir->d_type == DT_DIR && isNumeric(dir->d_name);
-}
-
-void* funzioneThread(void* arg){
+//Controlla che la stringa in input sia un PID ammissibile e nel caso ritorna un puntatore ad una struttura 'info' con le informazioni del processo.
+//In caso di errore ritorna NULL.
+//Funzione chiamata da ciascun thread
+info* getProcessInfoByDirName(void* arg){
 	char* stringa = arg;
+	
 	//Conversione nome directory in pid
 	errno = 0; 
 	long pid_long = strtol(stringa, NULL, 10); //NOTE
@@ -169,6 +204,15 @@ void* funzioneThread(void* arg){
 	return process;
 }
 
+int filter(const struct dirent* dir){
+	//Seleziona solo le entry relative a processi, ovvero directory che hanno come nome un numero (il PID del processo).
+	return dir->d_type == DT_DIR && isNumeric(dir->d_name);
+}
+
+//Crea array di info sui processi in esecuzione.
+//La dimensione dell'array viene salvata nella variabile size in input. 
+//In caso di errore la funzione ritorna NULL.
+//L'array può contenere elementi nulli.
 info** getProcessesList(int* len){
 	//Scansiona la directory /proc/ e filtra le directory relative a processi.
 	struct dirent** directories;
@@ -202,7 +246,7 @@ info** getProcessesList(int* len){
 	}
 
 	for(int i = 0; i<procs_n; i++){
-		int ret = pthread_create(&threads[i], NULL, funzioneThread, directories[i]->d_name);		
+		int ret = pthread_create(&threads[i], NULL, (void*) getProcessInfoByDirName, directories[i]->d_name);		
 		if(ret){
 			fprintf(stderr, "%s: Errore creazione thread %d\n", __func__, i);
 			//TODO error handling
@@ -229,36 +273,4 @@ info** getProcessesList(int* len){
 	*len = procs_n;
 
 	return processes;
-}
-
-char* getStateString(char s){
-	switch(s){
-		case 'R':
-			return "Running";
-		case 'S':
-			return "Sleeping";
-		case 'D':
-			return "Waiting";
-		case 'Z':
-			return "Zombie";
-		case 'T':
-			return "Stopped";
-		case 't':
-			return "Stopped";
-		case 'X':
-			return "Dead";
-		case 'x':
-			return "Dead";
-		case 'K':
-			return "Wavekill";
-		case 'W':
-			return "Waking";
-		case 'P':
-			return "Parking";
-		//
-		case 'I':
-			return "Idle";
-		default:
-			return "Unknown";
-	}
 }
